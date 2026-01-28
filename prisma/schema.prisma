@@ -1,0 +1,821 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== USER & AUTH ====================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String
+  role          UserRole  @default(AGENT)
+  phone         String?
+  avatar        String?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  clients       Client[]
+  policies      Policy[]
+  quotes        Quote[]
+  claims        Claim[]
+  commissions   Commission[]
+  campaigns     Campaign[]
+  activities    Activity[]
+  notifications Notification[]
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  AGENT
+  CSR
+}
+
+// ==================== CLIENT MANAGEMENT ====================
+
+model Client {
+  id              String       @id @default(cuid())
+  type            ClientType
+  status          ClientStatus @default(PROSPECT)
+
+  // Personal info
+  firstName       String
+  lastName        String
+  email           String?
+  phone           String?
+  mobile          String?
+  dateOfBirth     DateTime?
+  ssn             String?
+
+  // Business info (for commercial)
+  businessName    String?
+  businessType    String?
+  ein             String?
+  yearsInBusiness Int?
+  numberOfEmployees Int?
+  annualRevenue   Decimal?
+
+  // Address
+  address         String?
+  city            String?
+  state           String?
+  zipCode         String?
+
+  // Metadata
+  source          String?
+  referredBy      String?
+  notes           String?
+  tags            String[]
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relations
+  agentId         String
+  agent           User         @relation(fields: [agentId], references: [id])
+  householdId     String?
+  household       Household?   @relation(fields: [householdId], references: [id])
+
+  contacts        Contact[]
+  lifeEvents      LifeEvent[]
+  documents       Document[]
+  policies        Policy[]
+  quotes          Quote[]
+  claims          Claim[]
+  activities      Activity[]
+  campaigns       CampaignRecipient[]
+  referrals       Referral[]   @relation("ReferredClients")
+  referredOthers  Referral[]   @relation("ReferringClient")
+  crossSellRecommendations CrossSellRecommendation[]
+
+  @@index([agentId])
+  @@index([householdId])
+  @@index([email])
+  @@index([phone])
+}
+
+enum ClientType {
+  PERSONAL
+  COMMERCIAL
+}
+
+enum ClientStatus {
+  PROSPECT
+  ACTIVE
+  INACTIVE
+  FORMER
+}
+
+model Household {
+  id          String    @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  address     String?
+  city        String?
+  state       String?
+  zipCode     String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  members     Client[]
+}
+
+model Contact {
+  id          String      @id @default(cuid())
+  clientId    String
+  client      Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  type        ContactType
+  name        String
+  relationship String?
+  email       String?
+  phone       String?
+  isPrimary   Boolean     @default(false)
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([clientId])
+}
+
+enum ContactType {
+  FAMILY
+  BUSINESS
+  EMERGENCY
+  OTHER
+}
+
+model LifeEvent {
+  id          String    @id @default(cuid())
+  clientId    String
+  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  type        String
+  title       String
+  description String?
+  eventDate   DateTime
+  followUpDate DateTime?
+  isCompleted Boolean   @default(false)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([clientId])
+  @@index([eventDate])
+}
+
+model Document {
+  id          String       @id @default(cuid())
+  clientId    String?
+  client      Client?      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  policyId    String?
+  policy      Policy?      @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  claimId     String?
+  claim       Claim?       @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  type        DocumentType
+  name        String
+  fileName    String
+  fileUrl     String
+  fileSize    Int?
+  mimeType    String?
+  description String?
+
+  uploadedAt  DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([clientId])
+  @@index([policyId])
+  @@index([claimId])
+}
+
+enum DocumentType {
+  ID
+  APPLICATION
+  POLICY
+  ENDORSEMENT
+  CLAIM
+  CORRESPONDENCE
+  OTHER
+}
+
+// ==================== POLICY MANAGEMENT ====================
+
+model Carrier {
+  id          String    @id @default(cuid())
+  name        String
+  code        String    @unique
+  phone       String?
+  email       String?
+  website     String?
+  address     String?
+  isActive    Boolean   @default(true)
+
+  // Commission rates by line of business
+  commissionRates Json?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  policies    Policy[]
+  quotes      Quote[]
+}
+
+model Policy {
+  id              String        @id @default(cuid())
+  policyNumber    String        @unique
+  status          PolicyStatus  @default(ACTIVE)
+
+  // Policy details
+  lineOfBusiness  LineOfBusiness
+  type            String
+
+  // Dates
+  effectiveDate   DateTime
+  expirationDate  DateTime
+  cancelDate      DateTime?
+
+  // Premium
+  premium         Decimal
+  downPayment     Decimal?
+  installments    Int?
+  billingMethod   BillingMethod?
+
+  // Coverage summary
+  coverageSummary Json?
+  deductibles     Json?
+  limits          Json?
+
+  notes           String?
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  clientId        String
+  client          Client        @relation(fields: [clientId], references: [id])
+  carrierId       String
+  carrier         Carrier       @relation(fields: [carrierId], references: [id])
+  agentId         String
+  agent           User          @relation(fields: [agentId], references: [id])
+  quoteId         String?
+  quote           Quote?        @relation(fields: [quoteId], references: [id])
+
+  endorsements    Endorsement[]
+  documents       Document[]
+  claims          Claim[]
+  commissions     Commission[]
+  activities      Activity[]
+
+  @@index([clientId])
+  @@index([carrierId])
+  @@index([agentId])
+  @@index([status])
+  @@index([expirationDate])
+}
+
+enum PolicyStatus {
+  PENDING
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  NON_RENEWED
+}
+
+enum LineOfBusiness {
+  PERSONAL_AUTO
+  HOMEOWNERS
+  RENTERS
+  UMBRELLA
+  LIFE
+  HEALTH
+  COMMERCIAL_AUTO
+  COMMERCIAL_PROPERTY
+  GENERAL_LIABILITY
+  WORKERS_COMP
+  PROFESSIONAL_LIABILITY
+  CYBER
+  OTHER
+}
+
+enum BillingMethod {
+  DIRECT
+  AGENCY
+  PREMIUM_FINANCE
+}
+
+model Endorsement {
+  id              String    @id @default(cuid())
+  policyId        String
+  policy          Policy    @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
+  endorsementNumber String?
+  type            String
+  description     String
+  effectiveDate   DateTime
+  premiumChange   Decimal?
+  status          String    @default("PENDING")
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([policyId])
+}
+
+// ==================== QUOTING ====================
+
+model Quote {
+  id              String      @id @default(cuid())
+  quoteNumber     String      @unique
+  status          QuoteStatus @default(DRAFT)
+
+  // Quote details
+  lineOfBusiness  LineOfBusiness
+  type            String?
+  effectiveDate   DateTime
+
+  // Risk information
+  riskInfo        Json?
+
+  // Premium
+  premium         Decimal?
+  fees            Decimal?
+  taxes           Decimal?
+  totalPremium    Decimal?
+
+  // Comparison data (for multi-carrier)
+  carrierQuotes   Json?
+
+  notes           String?
+  expiresAt       DateTime?
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  clientId        String
+  client          Client      @relation(fields: [clientId], references: [id])
+  carrierId       String?
+  carrier         Carrier?    @relation(fields: [carrierId], references: [id])
+  agentId         String
+  agent           User        @relation(fields: [agentId], references: [id])
+
+  policies        Policy[]
+  proposal        Proposal?
+  followUps       QuoteFollowUp[]
+  activities      Activity[]
+
+  @@index([clientId])
+  @@index([agentId])
+  @@index([status])
+}
+
+enum QuoteStatus {
+  DRAFT
+  QUOTED
+  PROPOSED
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  BOUND
+}
+
+model Proposal {
+  id            String    @id @default(cuid())
+  quoteId       String    @unique
+  quote         Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  content       Json
+  sentAt        DateTime?
+  viewedAt      DateTime?
+  signedAt      DateTime?
+  signatureUrl  String?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model QuoteFollowUp {
+  id          String    @id @default(cuid())
+  quoteId     String
+  quote       Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  type        String
+  scheduledAt DateTime
+  completedAt DateTime?
+  notes       String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([quoteId])
+  @@index([scheduledAt])
+}
+
+// ==================== CLAIMS ====================
+
+model Claim {
+  id              String      @id @default(cuid())
+  claimNumber     String      @unique
+  status          ClaimStatus @default(REPORTED)
+
+  // Claim details
+  type            String
+  dateOfLoss      DateTime
+  dateReported    DateTime    @default(now())
+  description     String
+
+  // Location
+  lossLocation    String?
+
+  // Amounts
+  estimatedLoss   Decimal?
+  deductible      Decimal?
+  reserveAmount   Decimal?
+  paidAmount      Decimal?
+
+  // Adjuster
+  adjusterName    String?
+  adjusterPhone   String?
+  adjusterEmail   String?
+
+  notes           String?
+  closedAt        DateTime?
+  closedReason    String?
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  policyId        String
+  policy          Policy      @relation(fields: [policyId], references: [id])
+  clientId        String
+  client          Client      @relation(fields: [clientId], references: [id])
+  agentId         String
+  agent           User        @relation(fields: [agentId], references: [id])
+
+  documents       Document[]
+  communications  ClaimCommunication[]
+  settlements     Settlement[]
+  activities      Activity[]
+
+  @@index([policyId])
+  @@index([clientId])
+  @@index([status])
+}
+
+enum ClaimStatus {
+  REPORTED
+  UNDER_INVESTIGATION
+  PENDING_DOCUMENTS
+  IN_REVIEW
+  APPROVED
+  DENIED
+  SETTLED
+  CLOSED
+  REOPENED
+}
+
+model ClaimCommunication {
+  id          String    @id @default(cuid())
+  claimId     String
+  claim       Claim     @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  type        String
+  direction   String    // INBOUND or OUTBOUND
+  subject     String?
+  content     String
+  contactName String?
+
+  createdAt   DateTime  @default(now())
+
+  @@index([claimId])
+}
+
+model Settlement {
+  id          String    @id @default(cuid())
+  claimId     String
+  claim       Claim     @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  amount      Decimal
+  type        String
+  description String?
+  paidDate    DateTime?
+  checkNumber String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([claimId])
+}
+
+// ==================== COMMISSION TRACKING ====================
+
+model Commission {
+  id              String           @id @default(cuid())
+  status          CommissionStatus @default(PENDING)
+
+  // Commission details
+  type            CommissionType
+  amount          Decimal
+  rate            Decimal?
+  basePremium     Decimal?
+
+  // Statement info
+  statementId     String?
+  statementDate   DateTime?
+
+  // Dates
+  earnedDate      DateTime?
+  paidDate        DateTime?
+
+  notes           String?
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  // Relations
+  policyId        String
+  policy          Policy           @relation(fields: [policyId], references: [id])
+  agentId         String
+  agent           User             @relation(fields: [agentId], references: [id])
+
+  splits          CommissionSplit[]
+
+  @@index([policyId])
+  @@index([agentId])
+  @@index([status])
+  @@index([earnedDate])
+}
+
+enum CommissionStatus {
+  PENDING
+  EARNED
+  PAID
+  REVERSED
+  CHARGEDBACK
+}
+
+enum CommissionType {
+  NEW_BUSINESS
+  RENEWAL
+  ENDORSEMENT
+  OVERRIDE
+  BONUS
+  CONTINGENCY
+}
+
+model CommissionSplit {
+  id            String     @id @default(cuid())
+  commissionId  String
+  commission    Commission @relation(fields: [commissionId], references: [id], onDelete: Cascade)
+
+  producerId    String
+  percentage    Decimal
+  amount        Decimal
+
+  createdAt     DateTime   @default(now())
+
+  @@index([commissionId])
+  @@index([producerId])
+}
+
+// ==================== MARKETING & RENEWALS ====================
+
+model Campaign {
+  id            String           @id @default(cuid())
+  name          String
+  type          CampaignType
+  status        CampaignStatus   @default(DRAFT)
+
+  // Content
+  subject       String?
+  content       String?
+  template      String?
+
+  // Schedule
+  scheduledAt   DateTime?
+  sentAt        DateTime?
+
+  // Metrics
+  recipientCount Int?
+  openCount     Int?
+  clickCount    Int?
+  responseCount Int?
+
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  // Relations
+  createdById   String
+  createdBy     User             @relation(fields: [createdById], references: [id])
+
+  recipients    CampaignRecipient[]
+
+  @@index([createdById])
+  @@index([status])
+}
+
+enum CampaignType {
+  EMAIL
+  SMS
+  MAIL
+  RENEWAL_REMINDER
+  CROSS_SELL
+  NEWSLETTER
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  CANCELLED
+}
+
+model CampaignRecipient {
+  id          String    @id @default(cuid())
+  campaignId  String
+  campaign    Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  clientId    String
+  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  status      String    @default("PENDING")
+  sentAt      DateTime?
+  openedAt    DateTime?
+  clickedAt   DateTime?
+  respondedAt DateTime?
+
+  @@unique([campaignId, clientId])
+  @@index([campaignId])
+  @@index([clientId])
+}
+
+model Referral {
+  id              String    @id @default(cuid())
+  referringClientId String
+  referringClient Client    @relation("ReferringClient", fields: [referringClientId], references: [id])
+  referredClientId String?
+  referredClient  Client?   @relation("ReferredClients", fields: [referredClientId], references: [id])
+
+  referredName    String?
+  referredEmail   String?
+  referredPhone   String?
+  status          String    @default("PENDING")
+  notes           String?
+  rewardGiven     Boolean   @default(false)
+  rewardAmount    Decimal?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([referringClientId])
+  @@index([referredClientId])
+}
+
+// ==================== ACTIVITY & NOTIFICATIONS ====================
+
+model Activity {
+  id          String       @id @default(cuid())
+  type        ActivityType
+  title       String
+  description String?
+  metadata    Json?
+
+  createdAt   DateTime     @default(now())
+
+  // Relations
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  clientId    String?
+  client      Client?      @relation(fields: [clientId], references: [id])
+  policyId    String?
+  policy      Policy?      @relation(fields: [policyId], references: [id])
+  quoteId     String?
+  quote       Quote?       @relation(fields: [quoteId], references: [id])
+  claimId     String?
+  claim       Claim?       @relation(fields: [claimId], references: [id])
+
+  @@index([userId])
+  @@index([clientId])
+  @@index([policyId])
+  @@index([quoteId])
+  @@index([claimId])
+  @@index([createdAt])
+}
+
+enum ActivityType {
+  CLIENT_CREATED
+  CLIENT_UPDATED
+  POLICY_CREATED
+  POLICY_RENEWED
+  POLICY_CANCELLED
+  QUOTE_CREATED
+  QUOTE_SENT
+  QUOTE_ACCEPTED
+  CLAIM_REPORTED
+  CLAIM_UPDATED
+  CLAIM_CLOSED
+  DOCUMENT_UPLOADED
+  EMAIL_SENT
+  CALL_LOGGED
+  NOTE_ADDED
+  TASK_COMPLETED
+}
+
+model Notification {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+
+  type        String
+  title       String
+  message     String
+  link        String?
+  isRead      Boolean   @default(false)
+
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+}
+
+// ==================== EMAIL TEMPLATES ====================
+
+model EmailTemplate {
+  id          String    @id @default(cuid())
+  name        String
+  type        String    // WELCOME, RENEWAL, FOLLOW_UP, BIRTHDAY, CLAIM, CROSS_SELL
+  subject     String
+  content     String
+  variables   String[]  // List of variable names like client_name, agent_name
+  status      String    @default("ACTIVE") // ACTIVE, DRAFT, ARCHIVED
+  usageCount  Int       @default(0)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([type])
+  @@index([status])
+}
+
+// ==================== AI & ANALYTICS ====================
+
+model AIAnalysis {
+  id            String    @id @default(cuid())
+  type          String
+  entityType    String
+  entityId      String
+
+  input         Json
+  output        Json
+  confidence    Decimal?
+
+  createdAt     DateTime  @default(now())
+
+  @@index([entityType, entityId])
+}
+
+model RenewalPrediction {
+  id            String    @id @default(cuid())
+  policyId      String
+
+  renewalDate   DateTime
+  retentionScore Decimal
+  riskFactors   Json?
+  recommendations Json?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([policyId])
+  @@index([renewalDate])
+}
+
+model CrossSellRecommendation {
+  id            String    @id @default(cuid())
+  clientId      String
+  client        Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  recommendedProduct String
+  score         Decimal
+  reasoning     String?
+  currentPolicies String[]
+  status        String    @default("PENDING")
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([clientId])
+  @@index([status])
+}
