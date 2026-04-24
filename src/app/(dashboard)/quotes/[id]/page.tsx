@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import {
   ArrowBack, Edit, RequestQuote, Person, Business, Email, Phone, LocationOn,
-  CalendarToday, AttachMoney, Send, CheckCircle, Schedule,
+  CalendarToday, AttachMoney, Send, CheckCircle, Schedule, VerifiedUser, Gavel,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 
@@ -22,6 +22,9 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState(0);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [underwritingResult, setUnderwritingResult] = useState<any>(null);
+  const [isRunningUW, setIsRunningUW] = useState(false);
+  const [isIssuing, setIsIssuing] = useState(false);
 
   const { data: quote, isLoading } = useQuery({
     queryKey: ['quote', id],
@@ -85,31 +88,45 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
           Send Proposal
         </Button>
         <Button variant="outlined" startIcon={<Edit />} onClick={() => router.push(`/quotes/${id}/edit`)}>Edit</Button>
+        <Button
+          variant="outlined"
+          startIcon={<VerifiedUser />}
+          disabled={isRunningUW}
+          onClick={async () => {
+            setIsRunningUW(true);
+            try {
+              const response = await axios.post('/api/underwriting/evaluate', { quoteId: id });
+              setUnderwritingResult(response.data);
+              queryClient.invalidateQueries({ queryKey: ['quote', id] });
+              setSnackbar({ open: true, message: `Underwriting: ${response.data.decision} (Score: ${response.data.riskScore}/${response.data.maxScore})`, severity: response.data.decision === 'APPROVED' ? 'success' : 'error' });
+            } catch {
+              setSnackbar({ open: true, message: 'Failed to run underwriting', severity: 'error' });
+            } finally {
+              setIsRunningUW(false);
+            }
+          }}
+        >
+          {isRunningUW ? 'Evaluating...' : 'Run Underwriting'}
+        </Button>
         {quote.status === 'ACCEPTED' && (
           <Button
             variant="contained"
-            startIcon={<CheckCircle />}
+            startIcon={<Gavel />}
+            disabled={isIssuing}
             onClick={async () => {
+              setIsIssuing(true);
               try {
-                const response = await axios.post('/api/policies', {
-                  clientId: quote.client?.id,
-                  carrierId: quote.carrier?.id,
-                  quoteId: id,
-                  lineOfBusiness: quote.lineOfBusiness,
-                  type: quote.type,
-                  premium: quote.totalPremium,
-                  effectiveDate: quote.effectiveDate,
-                  status: 'PENDING',
-                });
-                await axios.patch(`/api/quotes/${id}`, { status: 'BOUND' });
-                setSnackbar({ open: true, message: 'Policy created successfully', severity: 'success' });
-                router.push(`/policies/${response.data.id}`);
-              } catch {
-                setSnackbar({ open: true, message: 'Failed to bind policy', severity: 'error' });
+                const response = await axios.post('/api/policies/issue', { quoteId: id });
+                setSnackbar({ open: true, message: `Policy ${response.data.policy.policyNumber} issued successfully!`, severity: 'success' });
+                router.push(`/policies/${response.data.policy.id}`);
+              } catch (err: any) {
+                setSnackbar({ open: true, message: err.response?.data?.error || 'Failed to issue policy', severity: 'error' });
+              } finally {
+                setIsIssuing(false);
               }
             }}
           >
-            Bind Policy
+            {isIssuing ? 'Issuing...' : 'Bind & Issue Policy'}
           </Button>
         )}
       </Box>
@@ -230,6 +247,35 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                       </pre>
                     </Paper>
                   </>
+                )}
+                {(underwritingResult || quote.underwritingResult) && (
+                  <Box sx={{ mt: 3 }}>
+                    <Typography variant="h6" fontWeight={600} gutterBottom>Underwriting Result</Typography>
+                    <Paper variant="outlined" sx={{ p: 2 }}>
+                      {(() => {
+                        const uw = underwritingResult || quote.underwritingResult;
+                        const decColor = uw.decision === 'APPROVED' ? 'success.main' : uw.decision === 'REFERRED' ? 'warning.main' : 'error.main';
+                        return (
+                          <>
+                            <Box sx={{ display: 'flex', gap: 2, mb: 1, alignItems: 'center' }}>
+                              <Chip label={uw.decision} color={uw.decision === 'APPROVED' ? 'success' : uw.decision === 'REFERRED' ? 'warning' : 'error'} />
+                              <Typography variant="body2">Score: <strong>{uw.riskScore}</strong> / {uw.maxScore}</Typography>
+                            </Box>
+                            {uw.factors && uw.factors.length > 0 && (
+                              <Box sx={{ mt: 1 }}>
+                                <Typography variant="caption" color="text.secondary">Risk Factors:</Typography>
+                                {uw.factors.map((f: any, i: number) => (
+                                  <Typography key={i} variant="body2" sx={{ ml: 1 }}>
+                                    - {f.ruleName}: +{f.riskPoints} pts
+                                  </Typography>
+                                ))}
+                              </Box>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </Paper>
+                  </Box>
                 )}
               </Grid>
             </Grid>

@@ -42,6 +42,7 @@ export async function GET(
           take: 10,
           orderBy: { createdAt: 'desc' },
         },
+        customerAuth: { select: { id: true, email: true, createdAt: true } },
       },
     });
 

@@ -13,15 +13,17 @@ export async function GET() {
     const now = new Date();
     const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
+    const sixtyDaysFromNow = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
+
     const renewals = await prisma.policy.findMany({
       where: {
         status: 'ACTIVE',
         expirationDate: {
           gte: now,
-          lte: thirtyDaysFromNow,
+          lte: sixtyDaysFromNow,
         },
       },
-      take: 10,
+      take: 20,
       orderBy: { expirationDate: 'asc' },
       include: {
         client: {
@@ -33,7 +35,30 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json(renewals);
+    // Enrich with renewal predictions and quotes
+    const enriched = await Promise.all(
+      renewals.map(async (policy) => {
+        const [prediction, renewalQuote] = await Promise.all([
+          prisma.renewalPrediction.findFirst({
+            where: { policyId: policy.id },
+            orderBy: { createdAt: 'desc' },
+          }),
+          prisma.quote.findFirst({
+            where: { renewalPolicyId: policy.id, isRenewal: true },
+            orderBy: { createdAt: 'desc' },
+          }),
+        ]);
+
+        return {
+          ...policy,
+          retentionScore: prediction ? Number(prediction.retentionScore) : null,
+          renewalQuoteId: renewalQuote?.id || null,
+          renewalQuoteStatus: renewalQuote?.status || null,
+        };
+      })
+    );
+
+    return NextResponse.json(enriched);
   } catch (error) {
     console.error('Renewals error:', error);
     return NextResponse.json({ error: 'Failed to fetch renewals' }, { status: 500 });

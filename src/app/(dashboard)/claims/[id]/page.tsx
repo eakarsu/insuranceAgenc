@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import {
   Box, Button, Card, CardContent, Typography, Grid, Chip, Avatar,
@@ -15,10 +15,13 @@ import {
   CalendarToday, AttachMoney, Description, Policy, CheckCircle, AccessTime,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
+import AIAnalysisCard from '@/components/ai/AIAnalysisCard';
+import DocumentAnalysisCard from '@/components/ai/DocumentAnalysisCard';
 
 export default function ClaimDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState(0);
 
   const { data: claim, isLoading } = useQuery({
@@ -81,6 +84,13 @@ export default function ClaimDetailPage({ params }: { params: { id: string } }) 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
                 <Typography variant="h4" fontWeight={700}>{claim.claimNumber}</Typography>
                 <Chip label={claim.status?.replace(/_/g, ' ')} color={getStatusColor(claim.status) as any} size="small" />
+                {claim.aiRiskScore != null && (
+                  <Chip
+                    label={`AI Risk: ${(claim.aiRiskScore * 100).toFixed(0)}%`}
+                    size="small"
+                    color={claim.aiRiskScore <= 0.3 ? 'success' : claim.aiRiskScore <= 0.7 ? 'warning' : 'error'}
+                  />
+                )}
               </Box>
               <Typography variant="h6" color="text.secondary" gutterBottom>{claim.type}</Typography>
               <Box sx={{ display: 'flex', gap: 3, mt: 2, flexWrap: 'wrap' }}>
@@ -160,6 +170,8 @@ export default function ClaimDetailPage({ params }: { params: { id: string } }) 
             <Tab label="Client & Policy" />
             <Tab label="Documents" />
             <Tab label="Settlements" />
+            <Tab label="AI Analysis" />
+            <Tab label="Fraud Detection" />
           </Tabs>
         </Box>
 
@@ -305,6 +317,90 @@ export default function ClaimDetailPage({ params }: { params: { id: string } }) 
                 </TableContainer>
               ) : (
                 <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>No settlements recorded</Typography>
+              )}
+            </Box>
+          )}
+
+          {/* AI Analysis Tab */}
+          {activeTab === 4 && (
+            <Box>
+              <AIAnalysisCard
+                claimId={claim.id}
+                classification={claim.aiClassification}
+                riskScore={claim.aiRiskScore}
+                aiFlags={claim.aiFlags}
+                onUpdate={() => queryClient.invalidateQueries({ queryKey: ['claim', id] })}
+              />
+              {claim.documents?.some((d: any) => d.aiAnalysis) && (
+                <>
+                  <Typography variant="h6" fontWeight={600} sx={{ mt: 3, mb: 1 }}>Document Analyses</Typography>
+                  {claim.documents.filter((d: any) => d.aiAnalysis).map((doc: any) => (
+                    <Box key={doc.id} sx={{ mb: 1 }}>
+                      <Typography variant="body2" fontWeight={500} gutterBottom>{doc.name}</Typography>
+                      <DocumentAnalysisCard analysis={doc.aiAnalysis} />
+                    </Box>
+                  ))}
+                </>
+              )}
+            </Box>
+          )}
+
+          {/* Fraud Detection Tab */}
+          {activeTab === 5 && (
+            <Box>
+              {claim.aiFlags?.fraudDetection ? (
+                <>
+                  <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+                    <Typography variant="h6" fontWeight={600}>Fraud Risk Score</Typography>
+                    <Chip
+                      label={`${((claim.aiFlags.fraudDetection.fraudRiskScore || claim.aiRiskScore || 0) * 100).toFixed(0)}%`}
+                      color={
+                        (claim.aiFlags.fraudDetection.fraudRiskScore || claim.aiRiskScore || 0) <= 0.3 ? 'success' :
+                        (claim.aiFlags.fraudDetection.fraudRiskScore || claim.aiRiskScore || 0) <= 0.7 ? 'warning' : 'error'
+                      }
+                    />
+                  </Box>
+                  {claim.aiFlags.fraudDetection.explanation && (
+                    <Typography variant="body2" sx={{ mb: 2 }}>{claim.aiFlags.fraudDetection.explanation}</Typography>
+                  )}
+                  {claim.aiFlags.fraudDetection.indicators?.length > 0 && (
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="subtitle1" fontWeight={600} gutterBottom>Fraud Indicators</Typography>
+                      <List dense>
+                        {claim.aiFlags.fraudDetection.indicators.map((ind: any, i: number) => (
+                          <ListItem key={i}>
+                            <ListItemText
+                              primary={
+                                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                  <Chip label={ind.severity} size="small" color={ind.severity === 'HIGH' ? 'error' : ind.severity === 'MEDIUM' ? 'warning' : 'info'} />
+                                  <span>{ind.type?.replace(/_/g, ' ')}</span>
+                                </Box>
+                              }
+                              secondary={ind.description}
+                            />
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Box>
+                  )}
+                  {claim.aiFlags.fraudDetection.recommendation && (
+                    <Paper variant="outlined" sx={{ p: 2 }}>
+                      <Typography variant="subtitle2" gutterBottom>Recommendation</Typography>
+                      <Typography variant="body2">{claim.aiFlags.fraudDetection.recommendation}</Typography>
+                    </Paper>
+                  )}
+                </>
+              ) : (
+                <Box>
+                  <Typography color="text.secondary" sx={{ mb: 2 }}>No fraud detection data available. Run AI analysis to generate fraud detection results.</Typography>
+                  <AIAnalysisCard
+                    claimId={claim.id}
+                    classification={claim.aiClassification}
+                    riskScore={claim.aiRiskScore}
+                    aiFlags={claim.aiFlags}
+                    onUpdate={() => queryClient.invalidateQueries({ queryKey: ['claim', id] })}
+                  />
+                </Box>
               )}
             </Box>
           )}

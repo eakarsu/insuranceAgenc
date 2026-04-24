@@ -7,8 +7,9 @@ import {
   Box, Card, CardContent, Typography, Grid, TextField, Button, FormControl, InputLabel, Select, MenuItem,
   CircularProgress, Alert, Stepper, Step, StepLabel, Paper, List, ListItem, ListItemIcon, ListItemText, Chip, Avatar,
 } from '@mui/material';
-import { SupportAgent, Send, Assignment, CheckCircle, Description, Phone, Shield, ArrowForward, Folder, Gavel } from '@mui/icons-material';
+import { SupportAgent, Send, Assignment, CheckCircle, Description, Phone, Shield, ArrowForward, Folder, Gavel, AutoFixHigh, Flag, AccountBalance, SwapHoriz } from '@mui/icons-material';
 import AIResponseFormatter from '@/components/ai/AIResponseFormatter';
+import { safeText } from '@/lib/ai-render-utils';
 
 export default function ClaimsAssistantPage() {
   const [claimType, setClaimType] = useState('');
@@ -78,6 +79,33 @@ export default function ClaimsAssistantPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 sx={{ mb: 3 }}
               />
+
+              {/* Sample Test Data */}
+              <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, mb: 3, bgcolor: 'grey.50', border: '1px dashed', borderColor: 'grey.300' }}>
+                <Typography variant="caption" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary', mb: 1 }}>
+                  <AutoFixHigh fontSize="small" /> SAMPLE TEST DATA
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  <Chip label="Auto Collision" size="small" variant="outlined" color="primary" sx={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      setClaimType('Auto Collision');
+                      setDateOfLoss('2024-12-15');
+                      setDescription('Client was rear-ended at a red light on Main Street. The other driver ran a red light and hit the client\'s 2022 Toyota Camry. Police report #2024-45678 was filed. Client reports neck pain and vehicle has significant rear bumper and trunk damage. Estimated repair cost $8,500. Other driver\'s insurance: State Farm policy #SF-9876543.');
+                    }} />
+                  <Chip label="Water Damage" size="small" variant="outlined" color="primary" sx={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      setClaimType('Property Water Damage');
+                      setDateOfLoss('2025-01-03');
+                      setDescription('Burst pipe in upstairs bathroom caused extensive water damage to first floor ceiling, walls, and hardwood floors. Client discovered damage upon returning from vacation. Emergency plumber was called. Water mitigation company ServPro is on site. Affected areas: living room, dining room, and kitchen. Estimated damage $25,000-35,000.');
+                    }} />
+                  <Chip label="Workers Comp" size="small" variant="outlined" color="primary" sx={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      setClaimType('Workers Compensation');
+                      setDateOfLoss('2025-01-20');
+                      setDescription('Employee John Martinez slipped on wet floor in warehouse at 123 Industrial Blvd. Injury to lower back and right knee. Transported to Memorial Hospital ER. Doctor prescribed 2 weeks off work and physical therapy. Incident report filed with HR. Witnesses: Maria Lopez, Tom Chen. Safety camera footage available.');
+                    }} />
+                </Box>
+              </Paper>
 
               <Button
                 fullWidth
@@ -153,7 +181,54 @@ export default function ClaimsAssistantPage() {
                         <Typography variant="subtitle1" fontWeight={600}>Coverage Analysis</Typography>
                       </Box>
                       <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: 'primary.50' }}>
-                        <Typography variant="body2" sx={{ lineHeight: 1.7 }}>{result.coverage}</Typography>
+                        {typeof result.coverage === 'string' ? (
+                          <Typography variant="body2" sx={{ lineHeight: 1.7 }}>{result.coverage}</Typography>
+                        ) : (
+                          <Box>
+                            {result.coverage.primaryCoverage && (
+                              <Box sx={{ mb: 1.5 }}>
+                                <Typography variant="caption" color="text.secondary" fontWeight={600}>Primary Coverage</Typography>
+                                <Typography variant="body2">{safeText(result.coverage.primaryCoverage)}</Typography>
+                              </Box>
+                            )}
+                            {result.coverage.deductible && (
+                              <Box sx={{ mb: 1.5 }}>
+                                <Typography variant="caption" color="text.secondary" fontWeight={600}>Deductible</Typography>
+                                <Typography variant="body2">{safeText(result.coverage.deductible)}</Typography>
+                              </Box>
+                            )}
+                            {result.coverage.applicableForms && Array.isArray(result.coverage.applicableForms) && result.coverage.applicableForms.length > 0 && (
+                              <Box sx={{ mb: 1.5 }}>
+                                <Typography variant="caption" color="text.secondary" fontWeight={600}>Applicable Forms</Typography>
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                                  {result.coverage.applicableForms.map((form: any, i: number) => (
+                                    <Chip key={i} label={safeText(form)} size="small" variant="outlined" color="primary" />
+                                  ))}
+                                </Box>
+                              </Box>
+                            )}
+                            {result.coverage.additionalCoverages && Array.isArray(result.coverage.additionalCoverages) && result.coverage.additionalCoverages.length > 0 && (
+                              <Box sx={{ mb: 1.5 }}>
+                                <Typography variant="caption" color="text.secondary" fontWeight={600}>Additional Coverages</Typography>
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                                  {result.coverage.additionalCoverages.map((cov: any, i: number) => (
+                                    <Chip key={i} label={safeText(cov)} size="small" color="primary" />
+                                  ))}
+                                </Box>
+                              </Box>
+                            )}
+                            {result.coverage.exclusionsToReview && Array.isArray(result.coverage.exclusionsToReview) && result.coverage.exclusionsToReview.length > 0 && (
+                              <Box>
+                                <Typography variant="caption" color="text.secondary" fontWeight={600}>Exclusions to Review</Typography>
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                                  {result.coverage.exclusionsToReview.map((exc: any, i: number) => (
+                                    <Chip key={i} label={safeText(exc)} size="small" variant="outlined" color="error" />
+                                  ))}
+                                </Box>
+                              </Box>
+                            )}
+                          </Box>
+                        )}
                       </Paper>
                     </Box>
                   )}
@@ -168,14 +243,27 @@ export default function ClaimsAssistantPage() {
                       </Box>
                       <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
                         <Stepper orientation="vertical" activeStep={-1}>
-                          {result.nextSteps.map((step: string, index: number) => (
+                          {result.nextSteps.map((step: any, index: number) => (
                             <Step key={index} completed={false}>
                               <StepLabel
                                 StepIconProps={{
                                   sx: { color: 'info.main' }
                                 }}
                               >
-                                <Typography variant="body2">{step}</Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                                  <Typography variant="body2">{safeText(step, 'step', 'action')}</Typography>
+                                  {typeof step === 'object' && step !== null && step.priority && (
+                                    <Chip
+                                      label={step.priority}
+                                      size="small"
+                                      color={step.priority.toLowerCase() === 'high' ? 'error' : step.priority.toLowerCase() === 'medium' ? 'warning' : 'default'}
+                                      variant="outlined"
+                                    />
+                                  )}
+                                  {typeof step === 'object' && step !== null && step.assignee && (
+                                    <Chip label={step.assignee} size="small" variant="outlined" color="info" />
+                                  )}
+                                </Box>
                               </StepLabel>
                             </Step>
                           ))}
@@ -193,7 +281,7 @@ export default function ClaimsAssistantPage() {
                       </Box>
                       <Paper variant="outlined" sx={{ borderRadius: 2, bgcolor: 'grey.50' }}>
                         <List dense disablePadding>
-                          {(Array.isArray(result.documentation) ? result.documentation : [result.documentation]).map((doc: string, i: number) => (
+                          {(Array.isArray(result.documentation) ? result.documentation : [result.documentation]).map((doc: any, i: number) => (
                             <ListItem
                               key={i}
                               sx={{
@@ -205,13 +293,107 @@ export default function ClaimsAssistantPage() {
                                 <Description color="action" />
                               </ListItemIcon>
                               <ListItemText
-                                primary={doc}
+                                primary={safeText(doc, 'document', 'name')}
+                                secondary={typeof doc === 'object' && doc !== null && doc.purpose ? doc.purpose : undefined}
                                 primaryTypographyProps={{ variant: 'body2' }}
                               />
-                              <Chip label="Required" size="small" variant="outlined" />
+                              {(typeof doc === 'string' || (typeof doc === 'object' && doc !== null && doc.required !== false)) && (
+                                <Chip label="Required" size="small" variant="outlined" />
+                              )}
+                              {typeof doc === 'object' && doc !== null && doc.required === false && (
+                                <Chip label="Optional" size="small" variant="outlined" color="default" />
+                              )}
                             </ListItem>
                           ))}
                         </List>
+                      </Paper>
+                    </Box>
+                  )}
+
+                  {/* Red Flags */}
+                  {result.redFlags && Array.isArray(result.redFlags) && result.redFlags.length > 0 && (
+                    <Box sx={{ mb: 3 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                        <Flag color="error" />
+                        <Typography variant="subtitle1" fontWeight={600}>Red Flags</Typography>
+                      </Box>
+                      <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: 'error.50' }}>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                          {result.redFlags.map((flag: any, i: number) => (
+                            <Chip
+                              key={i}
+                              icon={<Flag fontSize="small" />}
+                              label={safeText(flag)}
+                              size="small"
+                              color="error"
+                              variant="outlined"
+                              sx={{ fontWeight: 500 }}
+                            />
+                          ))}
+                        </Box>
+                      </Paper>
+                    </Box>
+                  )}
+
+                  {/* Reserve Recommendation */}
+                  {result.reserveRecommendation && (
+                    <Box sx={{ mb: 3 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                        <AccountBalance color="info" />
+                        <Typography variant="subtitle1" fontWeight={600}>Reserve Recommendation</Typography>
+                      </Box>
+                      <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: 'info.50' }}>
+                        {typeof result.reserveRecommendation === 'string' ? (
+                          <Typography variant="body2">{result.reserveRecommendation}</Typography>
+                        ) : (
+                          <Box>
+                            {result.reserveRecommendation.amount && (
+                              <Typography variant="h6" fontWeight={600} color="info.dark">
+                                {safeText(result.reserveRecommendation.amount)}
+                              </Typography>
+                            )}
+                            {result.reserveRecommendation.basis && (
+                              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                Basis: {safeText(result.reserveRecommendation.basis)}
+                              </Typography>
+                            )}
+                          </Box>
+                        )}
+                      </Paper>
+                    </Box>
+                  )}
+
+                  {/* Subrogation Potential */}
+                  {result.subrogationPotential && (
+                    <Box sx={{ mb: 3 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                        <SwapHoriz color="secondary" />
+                        <Typography variant="subtitle1" fontWeight={600}>Subrogation Potential</Typography>
+                      </Box>
+                      <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: 'secondary.50' }}>
+                        {typeof result.subrogationPotential === 'string' ? (
+                          <Typography variant="body2">{result.subrogationPotential}</Typography>
+                        ) : (
+                          <Box>
+                            {result.subrogationPotential.likelihood && (
+                              <Chip
+                                label={`Likelihood: ${safeText(result.subrogationPotential.likelihood)}`}
+                                size="small"
+                                color={
+                                  result.subrogationPotential.likelihood.toLowerCase?.() === 'high' ? 'success'
+                                    : result.subrogationPotential.likelihood.toLowerCase?.() === 'medium' ? 'warning'
+                                    : 'default'
+                                }
+                                sx={{ mb: 1 }}
+                              />
+                            )}
+                            {result.subrogationPotential.details && (
+                              <Typography variant="body2" sx={{ mt: 0.5 }}>
+                                {safeText(result.subrogationPotential.details)}
+                              </Typography>
+                            )}
+                          </Box>
+                        )}
                       </Paper>
                     </Box>
                   )}

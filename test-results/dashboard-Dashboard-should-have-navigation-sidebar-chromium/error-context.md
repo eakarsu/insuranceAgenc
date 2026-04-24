@@ -1,0 +1,52 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - alert [ref=e2]
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - heading "InsureFlow" [level=4] [ref=e7]
+      - paragraph [ref=e8]: Insurance Agency Management Platform
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - text: Email Address
+          - generic [ref=e12]: "*"
+        - generic [ref=e13]:
+          - img [ref=e15]
+          - textbox "Email Address" [ref=e17]
+          - group:
+            - generic: Email Address *
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - text: Password
+          - generic [ref=e20]: "*"
+        - generic [ref=e21]:
+          - img [ref=e23]
+          - textbox "Password" [ref=e25]
+          - button [ref=e27] [cursor=pointer]:
+            - img [ref=e28]
+          - group:
+            - generic: Password *
+      - button "Sign In" [ref=e30] [cursor=pointer]: Sign In
+    - generic [ref=e31]:
+      - 'heading "Demo Credentials (password: password123)" [level=6] [ref=e32]'
+      - paragraph [ref=e33]:
+        - strong [ref=e34]: "Admin:"
+        - text: admin@insureflow.com
+      - paragraph [ref=e35]:
+        - strong [ref=e36]: "Manager:"
+        - text: manager@insureflow.com
+      - paragraph [ref=e37]:
+        - strong [ref=e38]: "Agent:"
+        - text: john.smith@insureflow.com
+      - paragraph [ref=e39]:
+        - strong [ref=e40]: "Agent:"
+        - text: sarah.johnson@insureflow.com
+      - paragraph [ref=e41]:
+        - strong [ref=e42]: "Agent:"
+        - text: david.lee@insureflow.com
+      - paragraph [ref=e43]:
+        - strong [ref=e44]: "CSR:"
+        - text: mike.wilson@insureflow.com
+```

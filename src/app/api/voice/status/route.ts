@@ -18,17 +18,42 @@ export async function POST(request: NextRequest) {
 
     console.log('Call Status Update:', callData);
 
+    // Save to CallLog model
+    try {
+      await prisma.callLog.upsert({
+        where: { callSid: callData.callSid },
+        update: {
+          status: callData.callStatus || 'unknown',
+          duration: callData.duration ? parseInt(callData.duration) : null,
+        },
+        create: {
+          callSid: callData.callSid,
+          from: callData.from || '',
+          to: callData.to || '',
+          direction: callData.direction || 'inbound',
+          status: callData.callStatus || 'unknown',
+          duration: callData.duration ? parseInt(callData.duration) : null,
+        },
+      });
+    } catch (dbError) {
+      console.error('Failed to save CallLog:', dbError);
+    }
+
     // Log to database activity (optional - for call history)
     if (callData.callStatus === 'completed') {
       try {
-        await prisma.activity.create({
-          data: {
-            type: 'CALL',
-            title: `AI Voice Call - ${callData.direction}`,
-            description: `${callData.direction === 'inbound' ? 'Incoming' : 'Outgoing'} call ${callData.from} - Duration: ${callData.duration || 0}s`,
-            metadata: callData,
-          },
-        });
+        const adminUser = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
+        if (adminUser) {
+          await prisma.activity.create({
+            data: {
+              type: 'CALL_LOGGED',
+              title: `AI Voice Call - ${callData.direction}`,
+              description: `${callData.direction === 'inbound' ? 'Incoming' : 'Outgoing'} call ${callData.from} - Duration: ${callData.duration || 0}s`,
+              metadata: callData,
+              userId: adminUser.id,
+            },
+          });
+        }
       } catch (dbError) {
         console.error('Failed to log call activity:', dbError);
       }

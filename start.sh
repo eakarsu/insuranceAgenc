@@ -131,19 +131,122 @@ echo "=========================================="
 echo ""
 echo "Access the application at: http://localhost:${APP_PORT}"
 echo ""
-echo "Test credentials:"
-echo "  Admin: admin@insureflow.com / admin123"
-echo "  Agent: john.smith@insureflow.com / agent123"
-echo "  Agent: sarah.johnson@insureflow.com / agent123"
-echo "  CSR: mike.wilson@insureflow.com / agent123"
+echo "Auto-login enabled — no credentials needed"
+echo "The app will automatically sign in as the Agency Owner."
 echo ""
 
-# For development
+# ============================================
+# Process monitoring with auto-restart
+# ============================================
+
+DEV_PID=""
+STUDIO_PID=""
+LOG_FILE="./dev-server.log"
+
+cleanup() {
+  echo ""
+  echo "==> Shutting down InsureFlow..."
+  [ -n "$DEV_PID" ] && kill "$DEV_PID" 2>/dev/null && echo "  Stopped dev server (PID $DEV_PID)"
+  [ -n "$STUDIO_PID" ] && kill "$STUDIO_PID" 2>/dev/null && echo "  Stopped Prisma Studio (PID $STUDIO_PID)"
+  # Kill any remaining child processes
+  jobs -p | xargs kill 2>/dev/null || true
+  echo "  Cleanup complete. Goodbye!"
+  exit 0
+}
+
+trap cleanup SIGINT SIGTERM EXIT
+
+health_check() {
+  local max_attempts=30
+  local attempt=0
+  while [ $attempt -lt $max_attempts ]; do
+    if curl -sf "http://localhost:${APP_PORT}/api/health" >/dev/null 2>&1 || \
+       curl -sf "http://localhost:${APP_PORT}" >/dev/null 2>&1; then
+      return 0
+    fi
+    attempt=$((attempt + 1))
+    sleep 2
+  done
+  return 1
+}
+
+start_dev_server() {
+  echo "  Starting Next.js dev server (hot reload enabled)..."
+  npm run dev > "$LOG_FILE" 2>&1 &
+  DEV_PID=$!
+  echo "  Dev server PID: $DEV_PID"
+
+  echo "  Waiting for server to be ready..."
+  if health_check; then
+    echo "  Server is ready at http://localhost:${APP_PORT}"
+  else
+    echo "  WARNING: Server may still be starting up. Check $LOG_FILE for details."
+  fi
+}
+
+start_prisma_studio() {
+  echo "  Starting Prisma Studio (DB browser) on port 5555..."
+  npx prisma studio --port 5555 > /dev/null 2>&1 &
+  STUDIO_PID=$!
+  echo "  Prisma Studio PID: $STUDIO_PID (http://localhost:5555)"
+}
+
 if [ "${NODE_ENV:-development}" = "production" ]; then
   echo "Running in PRODUCTION mode..."
   npm run build
   npm run start
 else
-  echo "Running in DEVELOPMENT mode..."
-  npm run dev
+  echo "Running in DEVELOPMENT mode with hot reload..."
+  echo ""
+  echo "  Features:"
+  echo "    - Next.js HMR (frontend hot reload)"
+  echo "    - API route auto-reload (backend hot reload)"
+  echo "    - Auto-restart on crash"
+  echo "    - Prisma Studio (DB browser)"
+  echo "    - Health monitoring"
+  echo ""
+
+  start_dev_server
+  start_prisma_studio
+
+  echo ""
+  echo "=========================================="
+  echo "  InsureFlow is running!"
+  echo "  App:           http://localhost:${APP_PORT}"
+  echo "  Prisma Studio: http://localhost:5555"
+  echo "  Logs:          $LOG_FILE"
+  echo "  Press Ctrl+C to stop all services"
+  echo "=========================================="
+  echo ""
+
+  # Monitor dev server — auto-restart on crash
+  RESTART_COUNT=0
+  MAX_RESTARTS=5
+
+  while true; do
+    if ! kill -0 "$DEV_PID" 2>/dev/null; then
+      RESTART_COUNT=$((RESTART_COUNT + 1))
+      if [ $RESTART_COUNT -gt $MAX_RESTARTS ]; then
+        echo ""
+        echo "ERROR: Dev server crashed $MAX_RESTARTS times. Check $LOG_FILE for errors."
+        echo "Last 20 lines of log:"
+        tail -20 "$LOG_FILE" 2>/dev/null || true
+        cleanup
+      fi
+      echo ""
+      echo "WARNING: Dev server crashed! Restarting... (attempt $RESTART_COUNT/$MAX_RESTARTS)"
+      sleep 2
+      start_dev_server
+    fi
+
+    # Reset crash counter if server has been stable for 60 seconds
+    if [ $RESTART_COUNT -gt 0 ]; then
+      sleep 60
+      if kill -0 "$DEV_PID" 2>/dev/null; then
+        RESTART_COUNT=0
+      fi
+    else
+      sleep 5
+    fi
+  done
 fi

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import {
   Box,
@@ -34,7 +34,6 @@ import {
   ExpandMore,
   ChevronLeft,
   ChevronRight,
-  Logout,
   Person,
   Business,
   FamilyRestroom,
@@ -42,7 +41,6 @@ import {
   Event,
   Description,
   AutoAwesome,
-  Calculate,
   CompareArrows,
   Draw,
   FollowTheSigns,
@@ -61,6 +59,19 @@ import {
   Recommend,
   Assessment,
   SupportAgent,
+  Search,
+  PersonSearch,
+  Summarize as SummarizeIcon,
+  SentimentSatisfied,
+  Extension,
+  GavelRounded,
+  Payment,
+  VerifiedUser,
+  Rule,
+  ErrorOutline,
+  Feedback,
+  Logout,
+  Phone,
 } from '@mui/icons-material';
 
 const DRAWER_WIDTH = 280;
@@ -97,7 +108,6 @@ const navItems: NavItem[] = [
     icon: <Policy />,
     children: [
       { label: 'All Policies', path: '/policies', icon: <Policy /> },
-      { label: 'Add Policy', path: '/policies/new', icon: <Draw /> },
       { label: 'Endorsements', path: '/policies/endorsements', icon: <Draw /> },
       { label: 'Renewals', path: '/policies/renewals', icon: <Sync /> },
       { label: 'Cancellations', path: '/policies/cancellations', icon: <ReportProblem /> },
@@ -108,7 +118,6 @@ const navItems: NavItem[] = [
     icon: <RequestQuote />,
     children: [
       { label: 'All Quotes', path: '/quotes', icon: <RequestQuote /> },
-      { label: 'New Quote', path: '/quotes/new', icon: <Calculate /> },
       { label: 'Comparisons', path: '/quotes/comparisons', icon: <CompareArrows /> },
       { label: 'Proposals', path: '/quotes/proposals', icon: <Summarize /> },
       { label: 'Follow-ups', path: '/quotes/follow-ups', icon: <FollowTheSigns /> },
@@ -119,7 +128,6 @@ const navItems: NavItem[] = [
     icon: <ReportProblem />,
     children: [
       { label: 'All Claims', path: '/claims', icon: <ReportProblem /> },
-      { label: 'Report Claim', path: '/claims/new', icon: <Receipt /> },
       { label: 'Settlements', path: '/claims/settlements', icon: <AttachMoney /> },
     ],
   },
@@ -144,6 +152,45 @@ const navItems: NavItem[] = [
     ],
   },
   {
+    label: 'Payments',
+    icon: <Payment />,
+    children: [
+      { label: 'All Payments', path: '/payments', icon: <Payment /> },
+    ],
+  },
+  {
+    label: 'Underwriting',
+    icon: <VerifiedUser />,
+    children: [
+      { label: 'Results', path: '/underwriting', icon: <VerifiedUser /> },
+      { label: 'Rules', path: '/underwriting/rules', icon: <Rule /> },
+    ],
+  },
+  {
+    label: 'Compliance',
+    icon: <GavelRounded />,
+    children: [
+      { label: 'Dashboard', path: '/compliance', icon: <GavelRounded /> },
+      { label: 'Rules', path: '/compliance/rules', icon: <Rule /> },
+      { label: 'Checks', path: '/compliance/checks', icon: <VerifiedUser /> },
+    ],
+  },
+  {
+    label: 'Escalations',
+    path: '/escalations',
+    icon: <ErrorOutline />,
+  },
+  {
+    label: 'Complaints',
+    path: '/complaints',
+    icon: <Feedback />,
+  },
+  {
+    label: 'Reports',
+    path: '/reports',
+    icon: <Assessment />,
+  },
+  {
     label: 'AI Features',
     icon: <Psychology />,
     children: [
@@ -155,7 +202,22 @@ const navItems: NavItem[] = [
       { label: 'Voice Receptionist', path: '/ai/voice-receptionist', icon: <Mic /> },
       { label: 'Document Processor', path: '/ai/document-processor', icon: <DocumentScanner /> },
       { label: 'Risk Assessor', path: '/ai/risk-assessor', icon: <Assessment /> },
+      { label: 'Email Composer', path: '/ai/email-composer', icon: <Email /> },
+      { label: 'Smart Search', path: '/ai/smart-search', icon: <Search /> },
+      { label: 'Client Summary', path: '/ai/client-summary', icon: <PersonSearch /> },
+      { label: 'Claim Summarizer', path: '/ai/claim-summarizer', icon: <SummarizeIcon /> },
+      { label: 'Policy Comparison', path: '/ai/policy-comparison', icon: <CompareArrows /> },
+      { label: 'AI Chatbot', path: '/ai/chatbot', icon: <SmartToy /> },
+      { label: 'Sentiment Analysis', path: '/ai/sentiment-analysis', icon: <SentimentSatisfied /> },
+      { label: 'Loss Run Analyzer', path: '/ai/loss-run-analyzer', icon: <TrendingUp /> },
+      { label: 'Endorsement Recommender', path: '/ai/endorsement-recommender', icon: <Extension /> },
+      { label: 'Compliance Checker', path: '/ai/compliance-checker', icon: <GavelRounded /> },
     ],
+  },
+  {
+    label: 'Voice Agents',
+    path: '/voice-agents',
+    icon: <Phone />,
   },
   {
     label: 'Settings',
@@ -169,8 +231,10 @@ export default function Sidebar() {
   const [openMenus, setOpenMenus] = useState<string[]>(['Clients']);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { data: session } = useSession();
+  const fullPath = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
 
   const toggleMenu = (label: string) => {
     setOpenMenus((prev) =>
@@ -192,13 +256,17 @@ export default function Sidebar() {
     setAnchorEl(null);
   };
 
-  const handleLogout = async () => {
-    await signOut({ callbackUrl: '/login' });
+  const isActive = (path: string) => {
+    // Handle paths with query params (e.g. /reports?tab=1)
+    if (path.includes('?')) return fullPath === path;
+    return pathname === path;
   };
-
-  const isActive = (path: string) => pathname === path;
   const isParentActive = (children?: NavItem[]) =>
-    children?.some((child) => child.path && pathname.startsWith(child.path));
+    children?.some((child) => {
+      if (!child.path) return false;
+      const childPathname = child.path.split('?')[0];
+      return pathname.startsWith(childPathname);
+    });
 
   return (
     <Drawer
@@ -416,7 +484,7 @@ export default function Sidebar() {
               variant="caption"
               sx={{ color: 'rgba(255, 255, 255, 0.5)' }}
             >
-              {session?.user?.role || 'Agent'}
+              Owner
             </Typography>
           </Box>
         )}
@@ -443,7 +511,7 @@ export default function Sidebar() {
           Settings
         </MenuItem>
         <Divider />
-        <MenuItem onClick={handleLogout}>
+        <MenuItem onClick={() => { handleUserMenuClose(); signOut({ callbackUrl: '/auto-login' }); }}>
           <ListItemIcon>
             <Logout fontSize="small" />
           </ListItemIcon>

@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
         type: body.type,
         subject: body.subject,
         content: body.content,
-        variables: [...new Set(variables)], // Remove duplicates
+        variables: Array.from(new Set(variables)) as string[],
         status: body.status || 'ACTIVE',
       },
     });

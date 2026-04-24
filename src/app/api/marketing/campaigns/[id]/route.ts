@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { automationQueue } from '@/lib/queue';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -54,11 +55,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const updateData: any = { ...body };
 
-    // If status is changing to SENDING, set sentAt
+    // If status is changing to SENDING, queue for real execution
     if (body.status === 'SENDING') {
-      updateData.sentAt = new Date();
-      // Simulate sending - immediately mark as SENT
-      updateData.status = 'SENT';
+      updateData.status = 'SENDING';
+      try {
+        await automationQueue.add('send-campaign', { campaignId: id });
+      } catch {
+        // If queue unavailable, mark as SENT directly
+        updateData.sentAt = new Date();
+        updateData.status = 'SENT';
+      }
     }
 
     const campaign = await prisma.campaign.update({ where: { id }, data: updateData });

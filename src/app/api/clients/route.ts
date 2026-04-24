@@ -16,6 +16,9 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || '';
     const type = searchParams.get('type') || '';
     const status = searchParams.get('status') || '';
+    const state = searchParams.get('state') || '';
+    const city = searchParams.get('city') || '';
+    const agentId = searchParams.get('agentId') || '';
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
     const noHousehold = searchParams.get('noHousehold') === 'true';
@@ -34,6 +37,8 @@ export async function GET(request: NextRequest) {
         { email: { contains: search, mode: 'insensitive' } },
         { phone: { contains: search, mode: 'insensitive' } },
         { businessName: { contains: search, mode: 'insensitive' } },
+        { city: { contains: search, mode: 'insensitive' } },
+        { state: { contains: search, mode: 'insensitive' } },
       ];
     }
 
@@ -43,6 +48,18 @@ export async function GET(request: NextRequest) {
 
     if (status) {
       where.status = status;
+    }
+
+    if (state) {
+      where.state = { contains: state, mode: 'insensitive' };
+    }
+
+    if (city) {
+      where.city = { contains: city, mode: 'insensitive' };
+    }
+
+    if (agentId) {
+      where.agentId = agentId;
     }
 
     const [clients, total] = await Promise.all([
@@ -86,8 +103,16 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    // Use provided agentId if specified (for managers/admins), otherwise use session user
-    const agentId = body.agentId || session.user.id;
+    // Use provided agentId if specified (for managers/admins), auto-assign if not provided
+    let agentId = body.agentId || null;
+    if (!agentId) {
+      try {
+        const { autoAssignAgent } = await import('@/lib/lead-router');
+        agentId = await autoAssignAgent();
+      } catch {
+        agentId = session.user.id;
+      }
+    }
 
     // Clean up empty strings to null for optional fields
     const cleanData = {

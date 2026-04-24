@@ -12,7 +12,7 @@ import {
 import {
   Mic, Phone, PhoneCallback, Schedule, Settings, PlayArrow, Stop, VolumeUp,
   CallReceived, Voicemail, QuestionAnswer, CheckCircle, Close, Send, AccessTime,
-  RecordVoiceOver, Edit, Save, PhoneInTalk, CallEnd,
+  RecordVoiceOver, Edit, Save, PhoneInTalk, CallEnd, AutoFixHigh,
 } from '@mui/icons-material';
 
 const recentCalls = [
@@ -473,6 +473,22 @@ export default function VoiceReceptionistPage() {
           <Alert severity="info" sx={{ mb: 2 }}>
             Type a message to simulate a caller inquiry. The AI will respond as it would on a real call.
           </Alert>
+
+          {/* Sample Test Data */}
+          <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, mb: 2, bgcolor: 'grey.50', border: '1px dashed', borderColor: 'grey.300' }}>
+            <Typography variant="caption" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary', mb: 1 }}>
+              <AutoFixHigh fontSize="small" /> SAMPLE TEST DATA
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              <Chip label="File a Claim" size="small" variant="outlined" color="primary" sx={{ cursor: 'pointer' }}
+                onClick={() => setTestMessage('Hi, I was just in a car accident about an hour ago. My name is Robert Thompson and my policy number is POL-2024-00456. The other driver hit me from behind at a stop sign. I need to file a claim right away.')} />
+              <Chip label="Get a Quote" size="small" variant="outlined" color="primary" sx={{ cursor: 'pointer' }}
+                onClick={() => setTestMessage('Hello, I am looking to get a quote for homeowners insurance. I just purchased a house at 234 Oak Street. It is a 3-bedroom, 2-bathroom home built in 2015, about 2,100 square feet. What do I need to get a quote?')} />
+              <Chip label="Payment Issue" size="small" variant="outlined" color="primary" sx={{ cursor: 'pointer' }}
+                onClick={() => setTestMessage('I received a cancellation notice saying my policy will be cancelled for non-payment, but I set up autopay last month. My name is Lisa Chen and my policy number is POL-2024-00789. Can someone help me figure out what happened?')} />
+            </Box>
+          </Paper>
+
           <Paper sx={{ p: 2, maxHeight: 300, overflow: 'auto', bgcolor: 'grey.50', mb: 2 }}>
             {testConversation.map((msg, idx) => (
               <Box

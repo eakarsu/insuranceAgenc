@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       settlements: settlements.map(s => ({
         ...s,
-        status: s.paidDate ? 'PAID' : 'PENDING',
+        status: s.status || (s.paidDate ? 'PAID' : 'PENDING'),
       })),
       stats: { total, paid, pending },
     });

@@ -1,0 +1,406 @@
+Here's a complete front-end testing guide for every section and button:
+
+  ---
+  InsureFlow Frontend Testing Guide
+
+  0. Start the App
+
+  # Terminal 1 — start the app
+  ./start.sh
+
+  # Or if already seeded:
+  npm run dev
+
+  Open http://localhost:3000 — you should auto-redirect to the dashboard (no login form).
+
+  ---
+  1. Auto-Login Flow
+
+  ┌─────┬───────────────────────────────────┬──────────────────────────────────────────────────────────────────────────────────────────────┐
+  │  #  │               Test                │                                        What to check                                         │
+  ├─────┼───────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ 1   │ Visit http://localhost:3000       │ Redirects to /auto-login, shows spinner + "Starting InsureFlow...", then lands on /dashboard │
+  ├─────┼───────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ 2   │ Visit http://localhost:3000/login │ Immediately redirects to /auto-login → dashboard                                             │
+  ├─────┼───────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ 3   │ Open a private/incognito window   │ Same auto-login flow, no credentials needed                                                  │
+  └─────┴───────────────────────────────────┴──────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  ---
+  2. Sidebar Navigation
+
+  The sidebar is on the left. Test every section:
+
+  ┌─────┬──────────────────────────────────┬──────────────┬─────────────────────────────────────────────────────────────────┐
+  │  #  │           Sidebar Item           │    Click     │                            Expected                             │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 1   │ Collapse button (chevron at top) │ Click < icon │ Sidebar shrinks to icon-only mode                               │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 2   │ Dashboard                        │ Click        │ Shows stats cards, charts, recent activities, upcoming renewals │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 3   │ Clients → expand arrow           │ Click        │ Shows 7 sub-items                                               │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 4   │ Clients → All Clients            │ Click        │ Data grid of all 35 clients                                     │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 5   │ Clients → Personal Lines         │ Click        │ Filtered to personal clients only                               │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 6   │ Clients → Commercial Lines       │ Click        │ Filtered to commercial clients only                             │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 7   │ Clients → Households             │ Click        │ Household groupings                                             │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 8   │ Clients → Contacts               │ Click        │ Contact list                                                    │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 9   │ Clients → Life Events            │ Click        │ Life event tracker                                              │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 10  │ Clients → Documents              │ Click        │ Document repository                                             │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 11  │ Policies → expand                │ Click        │ 4 sub-items                                                     │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 12  │ Policies → All Policies          │ Click        │ Data grid of policies                                           │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 13  │ Policies → Endorsements          │ Click        │ Endorsement list                                                │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 14  │ Policies → Renewals              │ Click        │ Upcoming renewals                                               │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 15  │ Policies → Cancellations         │ Click        │ Cancelled policies                                              │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 16  │ Quotes → expand                  │ Click        │ 4 sub-items                                                     │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 17  │ Quotes → All Quotes              │ Click        │ Data grid of quotes                                             │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 18  │ Quotes → Comparisons             │ Click        │ Quote comparison view                                           │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 19  │ Quotes → Proposals               │ Click        │ Proposal list                                                   │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 20  │ Quotes → Follow-ups              │ Click        │ Follow-up tracking                                              │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 21  │ Claims → expand                  │ Click        │ 2 sub-items                                                     │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 22  │ Claims → All Claims              │ Click        │ Claims data grid with AI risk scores                            │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 23  │ Claims → Settlements             │ Click        │ Settlement tracking                                             │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 24  │ Commissions → expand             │ Click        │ 4 sub-items                                                     │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 25  │ Commissions → Overview           │ Click        │ Charts + commission breakdown                                   │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 26  │ Commissions → Statements         │ Click        │ Commission statements                                           │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 27  │ Commissions → Forecasting        │ Click        │ Forecasting/projections                                         │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 28  │ Commissions → Producer Splits    │ Click        │ Split management                                                │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 29  │ Marketing → expand               │ Click        │ 4 sub-items                                                     │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 30  │ Marketing → Campaigns            │ Click        │ Campaign list                                                   │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 31  │ Marketing → Email Templates      │ Click        │ Template list                                                   │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 32  │ Marketing → Referrals            │ Click        │ Referral tracking                                               │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 33  │ Marketing → Cross-Sell           │ Click        │ Cross-sell opportunities (new job populates this!)              │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 34  │ Payments                         │ Click        │ Payment history                                                 │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 35  │ Underwriting → expand            │ Click        │ Results + Rules                                                 │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 36  │ Compliance → expand              │ Click        │ Dashboard, Rules, Checks                                        │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 37  │ Escalations                      │ Click        │ Escalated items                                                 │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 38  │ Complaints                       │ Click        │ Complaints list                                                 │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 39  │ Reports                          │ Click        │ Reports & analytics                                             │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 40  │ AI Features → expand             │ Click        │ 18 AI tools listed                                              │
+  ├─────┼──────────────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────────┤
+  │ 41  │ Settings                         │ Click        │ Settings page                                                   │
+  └─────┴──────────────────────────────────┴──────────────┴─────────────────────────────────────────────────────────────────┘
+
+  ---
+  3. Header Buttons (Top Bar)
+
+  ┌─────┬────────────────────────────────────┬───────────┬───────────────────────────────────────────────┐
+  │  #  │               Button               │  Action   │                   Expected                    │
+  ├─────┼────────────────────────────────────┼───────────┼───────────────────────────────────────────────┤
+  │ 1   │ + Quick Add (plus icon, top-right) │ Click     │ Dropdown menu with 4 options                  │
+  ├─────┼────────────────────────────────────┼───────────┼───────────────────────────────────────────────┤
+  │ 2   │ Quick Add → New Client             │ Click     │ Opens /clients/new form                       │
+  ├─────┼────────────────────────────────────┼───────────┼───────────────────────────────────────────────┤
+  │ 3   │ Quick Add → New Quote              │ Click     │ Opens /quotes/new form                        │
+  ├─────┼────────────────────────────────────┼───────────┼───────────────────────────────────────────────┤
+  │ 4   │ Quick Add → New Policy             │ Click     │ Opens /policies/new form                      │
+  ├─────┼────────────────────────────────────┼───────────┼───────────────────────────────────────────────┤
+  │ 5   │ Quick Add → Report Claim           │ Click     │ Opens /claims/new form                        │
+  ├─────┼────────────────────────────────────┼───────────┼───────────────────────────────────────────────┤
+  │ 6   │ Bell icon (notifications)          │ Click     │ Opens notification dropdown with recent items │
+  ├─────┼────────────────────────────────────┼───────────┼───────────────────────────────────────────────┤
+  │ 7   │ Notification item                  │ Click any │ Marks as read, navigates to linked resource   │
+  └─────┴────────────────────────────────────┴───────────┴───────────────────────────────────────────────┘
+
+  ---
+  4. Data Grid Pages (Clients, Policies, Quotes, Claims, Commissions)
+
+  Test these common patterns on each list page:
+
+  ┌─────┬─────────────────────────┬───────────────────────────────────────┬──────────────────────────────────┐
+  │  #  │         Feature         │              How to test              │             Expected             │
+  ├─────┼─────────────────────────┼───────────────────────────────────────┼──────────────────────────────────┤
+  │ 1   │ Search                  │ Type a name/number in search bar      │ Table filters in real-time       │
+  ├─────┼─────────────────────────┼───────────────────────────────────────┼──────────────────────────────────┤
+  │ 2   │ Filter dropdowns        │ Select Status, Type, LOB filters      │ Table filters to match           │
+  ├─────┼─────────────────────────┼───────────────────────────────────────┼──────────────────────────────────┤
+  │ 3   │ Row click               │ Click any row                         │ Detail dialog/modal opens        │
+  ├─────┼─────────────────────────┼───────────────────────────────────────┼──────────────────────────────────┤
+  │ 4   │ Row checkbox            │ Check 2-3 rows                        │ Bulk action bar appears          │
+  ├─────┼─────────────────────────┼───────────────────────────────────────┼──────────────────────────────────┤
+  │ 5   │ Bulk actions            │ Select rows → click Bulk Action       │ Options: Update Status, Delete   │
+  ├─────┼─────────────────────────┼───────────────────────────────────────┼──────────────────────────────────┤
+  │ 6   │ 3-dot menu (row action) │ Click ⋮ on any row                    │ Menu: View Details, Edit, Delete │
+  ├─────┼─────────────────────────┼───────────────────────────────────────┼──────────────────────────────────┤
+  │ 7   │ View Details            │ Click from row menu                   │ Detail dialog with all info      │
+  ├─────┼─────────────────────────┼───────────────────────────────────────┼──────────────────────────────────┤
+  │ 8   │ Edit                    │ Click from row menu                   │ Edit form/dialog                 │
+  ├─────┼─────────────────────────┼───────────────────────────────────────┼──────────────────────────────────┤
+  │ 9   │ Delete                  │ Click from row menu                   │ Confirmation dialog → deletes    │
+  ├─────┼─────────────────────────┼───────────────────────────────────────┼──────────────────────────────────┤
+  │ 10  │ PDF Export              │ Click PDF icon in toolbar             │ Downloads PDF                    │
+  ├─────┼─────────────────────────┼───────────────────────────────────────┼──────────────────────────────────┤
+  │ 11  │ CSV Export              │ Click CSV icon in toolbar             │ Downloads CSV                    │
+  ├─────┼─────────────────────────┼───────────────────────────────────────┼──────────────────────────────────┤
+  │ 12  │ Pagination              │ Click page 2, or change rows-per-page │ Grid updates                     │
+  ├─────┼─────────────────────────┼───────────────────────────────────────┼──────────────────────────────────┤
+  │ 13  │ Column sort             │ Click column header                   │ Sorts ascending/descending       │
+  └─────┴─────────────────────────┴───────────────────────────────────────┴──────────────────────────────────┘
+
+  ---
+  5. CRUD Forms (Create/Edit)
+
+  5a. New Client (/clients/new or Quick Add → New Client)
+
+  ┌─────────────────────────────────────┬───────────────────────────────────────────┐
+  │                Field                │                   Test                    │
+  ├─────────────────────────────────────┼───────────────────────────────────────────┤
+  │ First Name / Last Name              │ Fill in                                   │
+  ├─────────────────────────────────────┼───────────────────────────────────────────┤
+  │ Email / Phone                       │ Fill in                                   │
+  ├─────────────────────────────────────┼───────────────────────────────────────────┤
+  │ Type toggle (Personal / Commercial) │ Switch between — form fields change       │
+  ├─────────────────────────────────────┼───────────────────────────────────────────┤
+  │ Business Name (commercial only)     │ Appears when Commercial selected          │
+  ├─────────────────────────────────────┼───────────────────────────────────────────┤
+  │ Address / City / State / Zip        │ Fill in                                   │
+  ├─────────────────────────────────────┼───────────────────────────────────────────┤
+  │ Save button                         │ Click — should create client and redirect │
+  └─────────────────────────────────────┴───────────────────────────────────────────┘
+
+  5b. New Quote (/quotes/new)
+
+  ┌─────────────────────────┬───────────────────────────┐
+  │          Field          │           Test            │
+  ├─────────────────────────┼───────────────────────────┤
+  │ Client dropdown         │ Select a client           │
+  ├─────────────────────────┼───────────────────────────┤
+  │ Line of Business        │ Select (Auto, Home, etc.) │
+  ├─────────────────────────┼───────────────────────────┤
+  │ Carrier                 │ Select from list          │
+  ├─────────────────────────┼───────────────────────────┤
+  │ Effective Date          │ Pick date                 │
+  ├─────────────────────────┼───────────────────────────┤
+  │ Premium / Total Premium │ Enter numbers             │
+  ├─────────────────────────┼───────────────────────────┤
+  │ Save Draft / Submit     │ Click — creates quote     │
+  └─────────────────────────┴───────────────────────────┘
+
+  5c. New Policy (/policies/new)
+
+  ┌──────────────────────────────┬─────────────────────────┐
+  │            Field             │          Test           │
+  ├──────────────────────────────┼─────────────────────────┤
+  │ Client / Carrier / LOB       │ Select                  │
+  ├──────────────────────────────┼─────────────────────────┤
+  │ Policy Number                │ Auto-generated or enter │
+  ├──────────────────────────────┼─────────────────────────┤
+  │ Effective / Expiration dates │ Pick                    │
+  ├──────────────────────────────┼─────────────────────────┤
+  │ Premium / Deductible         │ Enter                   │
+  ├──────────────────────────────┼─────────────────────────┤
+  │ Save                         │ Click — creates policy  │
+  └──────────────────────────────┴─────────────────────────┘
+
+  5d. Report Claim (/claims/new)
+
+  ┌─────────────────┬───────────────────────┐
+  │      Field      │         Test          │
+  ├─────────────────┼───────────────────────┤
+  │ Client / Policy │ Select                │
+  ├─────────────────┼───────────────────────┤
+  │ Date of Loss    │ Pick date             │
+  ├─────────────────┼───────────────────────┤
+  │ Claim Type      │ Select                │
+  ├─────────────────┼───────────────────────┤
+  │ Description     │ Enter text            │
+  ├─────────────────┼───────────────────────┤
+  │ Estimated Loss  │ Enter amount          │
+  ├─────────────────┼───────────────────────┤
+  │ Submit          │ Click — creates claim │
+  └─────────────────┴───────────────────────┘
+
+  ---
+  6. AI Features (18 Tools)
+
+  Navigate to AI Features in sidebar, then test each:
+
+  ┌─────┬─────────────────────────┬─────────────────────────────┬──────────────────────────────────────┐
+  │  #  │         AI Tool         │            Path             │           Buttons to test            │
+  ├─────┼─────────────────────────┼─────────────────────────────┼──────────────────────────────────────┤
+  │ 1   │ AI Dashboard            │ /ai                         │ Click any of the 18 tool cards       │
+  ├─────┼─────────────────────────┼─────────────────────────────┼──────────────────────────────────────┤
+  │ 2   │ Quote Generator         │ /ai/quote-generator         │ Enter client info → Generate Quote   │
+  ├─────┼─────────────────────────┼─────────────────────────────┼──────────────────────────────────────┤
+  │ 3   │ Coverage Analyzer       │ /ai/coverage-analyzer       │ Select client → Analyze Coverage     │
+  ├─────┼─────────────────────────┼─────────────────────────────┼──────────────────────────────────────┤
+  │ 4   │ Claims Assistant        │ /ai/claims-assistant        │ Enter claim details → Analyze        │
+  ├─────┼─────────────────────────┼─────────────────────────────┼──────────────────────────────────────┤
+  │ 5   │ Renewal Predictor       │ /ai/renewal-predictor       │ Select policy → Predict              │
+  ├─────┼─────────────────────────┼─────────────────────────────┼──────────────────────────────────────┤
+  │ 6   │ Voice Receptionist      │ /ai/voice-receptionist      │ View call logs / Start               │
+  ├─────┼─────────────────────────┼─────────────────────────────┼──────────────────────────────────────┤
+  │ 7   │ Risk Assessor           │ /ai/risk-assessor           │ Enter risk info → Assess             │
+  ├─────┼─────────────────────────┼─────────────────────────────┼──────────────────────────────────────┤
+  │ 8   │ Email Composer          │ /ai/email-composer          │ Select template/context → Compose    │
+  ├─────┼─────────────────────────┼─────────────────────────────┼──────────────────────────────────────┤
+  │ 9   │ Smart Search            │ /ai/smart-search            │ Type natural language query → Search │
+  ├─────┼─────────────────────────┼─────────────────────────────┼──────────────────────────────────────┤
+  │ 10  │ Client Summary          │ /ai/client-summary          │ Select client → Generate Summary     │
+  ├─────┼─────────────────────────┼─────────────────────────────┼──────────────────────────────────────┤
+  │ 11  │ Claim Summarizer        │ /ai/claim-summarizer        │ Select claim → Summarize             │
+  ├─────┼─────────────────────────┼─────────────────────────────┼──────────────────────────────────────┤
+  │ 12  │ Policy Comparison       │ /ai/policy-comparison       │ Select 2 policies → Compare          │
+  ├─────┼─────────────────────────┼─────────────────────────────┼──────────────────────────────────────┤
+  │ 13  │ AI Chatbot              │ /ai/chatbot                 │ Type message → Send                  │
+  ├─────┼─────────────────────────┼─────────────────────────────┼──────────────────────────────────────┤
+  │ 14  │ Sentiment Analysis      │ /ai/sentiment-analysis      │ Paste text → Analyze                 │
+  ├─────┼─────────────────────────┼─────────────────────────────┼──────────────────────────────────────┤
+  │ 15  │ Loss Run Analyzer       │ /ai/loss-run-analyzer       │ Upload/select data → Analyze         │
+  ├─────┼─────────────────────────┼─────────────────────────────┼──────────────────────────────────────┤
+  │ 16  │ Endorsement Recommender │ /ai/endorsement-recommender │ Select policy → Recommend            │
+  ├─────┼─────────────────────────┼─────────────────────────────┼──────────────────────────────────────┤
+  │ 17  │ Compliance Checker      │ /ai/compliance-checker      │ Select policy → Check                │
+  └─────┴─────────────────────────┴─────────────────────────────┴──────────────────────────────────────┘
+
+  Note: AI features need an ANTHROPIC_API_KEY or OPENAI_API_KEY in .env to return real results. Without one you'll get an error response — that's expected.
+
+  ---
+  7. Marketing Campaigns
+
+  ┌─────┬─────────────────────┬───────────────────────────────────────────────┐
+  │  #  │       Action        │                      How                      │
+  ├─────┼─────────────────────┼───────────────────────────────────────────────┤
+  │ 1   │ View campaigns list │ Sidebar → Marketing → Campaigns               │
+  ├─────┼─────────────────────┼───────────────────────────────────────────────┤
+  │ 2   │ Create campaign     │ Click + New Campaign button                   │
+  ├─────┼─────────────────────┼───────────────────────────────────────────────┤
+  │ 3   │ Fill form           │ Name, Type (Email/SMS/Mail), Subject, Content │
+  ├─────┼─────────────────────┼───────────────────────────────────────────────┤
+  │ 4   │ Save draft          │ Click Save                                    │
+  ├─────┼─────────────────────┼───────────────────────────────────────────────┤
+  │ 5   │ Send campaign       │ Row menu → Send Campaign                      │
+  ├─────┼─────────────────────┼───────────────────────────────────────────────┤
+  │ 6   │ View templates      │ Marketing → Email Templates                   │
+  ├─────┼─────────────────────┼───────────────────────────────────────────────┤
+  │ 7   │ Create template     │ Click + New Template                          │
+  ├─────┼─────────────────────┼───────────────────────────────────────────────┤
+  │ 8   │ Check cross-sell    │ Marketing → Cross-Sell                        │
+  └─────┴─────────────────────┴───────────────────────────────────────────────┘
+
+  ---
+  8. New Automation Jobs (Manual Trigger)
+
+  Test the 3 new cron jobs via API:
+
+  # Cross-sell detection
+  curl http://localhost:3000/api/cron?job=cross-sell-detection
+
+  # Client follow-up
+  curl http://localhost:3000/api/cron?job=client-follow-up
+
+  # Document expiration
+  curl http://localhost:3000/api/cron?job=document-expiration
+
+  # Run ALL jobs at once
+  curl http://localhost:3000/api/cron
+
+  After running, check:
+  - Bell icon (notifications) — new notifications should appear
+  - Marketing → Cross-Sell — new recommendations from the cross-sell job
+  - Server logs — [Job] Completed: cross-sell-detection etc.
+
+  ---
+  9. User Section (Bottom-Left of Sidebar)
+
+  ┌─────┬──────────────────┬───────────────────────────────────────────────────────┐
+  │  #  │       Test       │                       Expected                        │
+  ├─────┼──────────────────┼───────────────────────────────────────────────────────┤
+  │ 1   │ Check avatar     │ Shows first letter of "Agency Owner"                  │
+  ├─────┼──────────────────┼───────────────────────────────────────────────────────┤
+  │ 2   │ Check name       │ Shows "Agency Owner"                                  │
+  ├─────┼──────────────────┼───────────────────────────────────────────────────────┤
+  │ 3   │ Check role label │ Shows "Owner" (not "Agent" or "ADMIN")                │
+  ├─────┼──────────────────┼───────────────────────────────────────────────────────┤
+  │ 4   │ Click avatar     │ Menu opens with Profile and Settings only (no Logout) │
+  ├─────┼──────────────────┼───────────────────────────────────────────────────────┤
+  │ 5   │ Click Profile    │ Navigates to profile settings                         │
+  ├─────┼──────────────────┼───────────────────────────────────────────────────────┤
+  │ 6   │ Click Settings   │ Navigates to settings                                 │
+  └─────┴──────────────────┴───────────────────────────────────────────────────────┘
+
+  ---
+  10. Customer Portal
+
+  ┌─────┬────────────────────────────────────┬───────────────────────────────────────────┐
+  │  #  │                URL                 │                   Test                    │
+  ├─────┼────────────────────────────────────┼───────────────────────────────────────────┤
+  │ 1   │ http://localhost:3000/portal/login │ Customer login page (separate from agent) │
+  ├─────┼────────────────────────────────────┼───────────────────────────────────────────┤
+  │ 2   │ http://localhost:3000/portal       │ Customer dashboard (after login)          │
+  ├─────┼────────────────────────────────────┼───────────────────────────────────────────┤
+  │ 3   │ /portal/policies                   │ Customer's policies view                  │
+  ├─────┼────────────────────────────────────┼───────────────────────────────────────────┤
+  │ 4   │ /portal/claims                     │ Customer's claims + file new claim        │
+  ├─────┼────────────────────────────────────┼───────────────────────────────────────────┤
+  │ 5   │ /portal/documents                  │ Customer's documents                      │
+  ├─────┼────────────────────────────────────┼───────────────────────────────────────────┤
+  │ 6   │ /portal/payments                   │ Payment history                           │
+  ├─────┼────────────────────────────────────┼───────────────────────────────────────────┤
+  │ 7   │ /portal/proposals                  │ View/sign proposals                       │
+  ├─────┼────────────────────────────────────┼───────────────────────────────────────────┤
+  │ 8   │ /portal/profile                    │ Edit profile                              │
+  └─────┴────────────────────────────────────┴───────────────────────────────────────────┘
+
+  ---
+  11. Health Check & API Verification
+
+  # Basic health
+  curl http://localhost:3000/api/health
+
+  # Detailed health (returns record counts, memory, uptime)
+  curl http://localhost:3000/api/health/detailed
+
+  Expected: {"status":"healthy"} — no Redis errors.
+
+  ---
+  Quick Checklist Summary
+
+  - Auto-login works (no login form shown)
+  - Dashboard loads with stats and charts
+  - All 14 sidebar sections expand and navigate correctly
+  - Header + Quick Add creates new records
+  - Notifications bell shows items
+  - Each data grid: search, filter, sort, paginate, export
+  - CRUD: create, read, edit, delete for clients/policies/quotes/claims
+  - AI tools load (18 pages)
+  - Cross-sell/follow-up/doc-expiration jobs execute via /api/cron
+  - Sidebar shows "Owner" with no Logout option
+  - Health endpoint returns healthy
+  - Customer portal pages load at /portal/*

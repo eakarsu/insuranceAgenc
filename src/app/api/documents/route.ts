@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
     const document = await prisma.document.create({
       data: {
         clientId: clientId || null,
-        type: type || 'OTHER',
+        type: (type || 'OTHER') as any,
         name: name || 'Untitled Document',
         fileName,
         fileUrl,

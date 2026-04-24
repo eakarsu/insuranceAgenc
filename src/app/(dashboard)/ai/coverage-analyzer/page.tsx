@@ -7,8 +7,9 @@ import {
   Box, Card, CardContent, Typography, Grid, Button, FormControl, Autocomplete, TextField,
   CircularProgress, Alert, Chip, LinearProgress, List, ListItem, ListItemIcon, ListItemText, Paper, Avatar,
 } from '@mui/material';
-import { Security, Warning, CheckCircle, Info, Send, Refresh, Shield, TipsAndUpdates, GppBad } from '@mui/icons-material';
+import { Security, Warning, CheckCircle, Info, Send, Refresh, Shield, TipsAndUpdates, GppBad, AutoFixHigh } from '@mui/icons-material';
 import AIResponseFormatter from '@/components/ai/AIResponseFormatter';
+import { safeText } from '@/lib/ai-render-utils';
 
 export default function CoverageAnalyzerPage() {
   const [clientId, setClientId] = useState('');
@@ -18,7 +19,7 @@ export default function CoverageAnalyzerPage() {
     queryKey: ['clients-list'],
     queryFn: async () => {
       const response = await axios.get('/api/clients?limit=100');
-      return response.data.clients;
+      return response.data.clients || [];
     },
   });
 
@@ -94,6 +95,33 @@ export default function CoverageAnalyzerPage() {
                 </Box>
               )}
 
+              {/* Sample Test Data */}
+              <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, mb: 3, bgcolor: 'grey.50', border: '1px dashed', borderColor: 'grey.300' }}>
+                <Typography variant="caption" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary', mb: 1 }}>
+                  <AutoFixHigh fontSize="small" /> SAMPLE TEST DATA
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  <Chip label="First Client" size="small" variant="outlined" color="primary" sx={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      const id = clients?.[0]?.id || '';
+                      setClientId(id);
+                      if (id) alert('Selected the first client from the list. Click "Analyze Coverage" to run AI coverage gap analysis for this client.');
+                    }} />
+                  <Chip label="Second Client" size="small" variant="outlined" color="primary" sx={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      const id = clients?.[1]?.id || clients?.[0]?.id || '';
+                      setClientId(id);
+                      if (id) alert('Selected the second client from the list. Click "Analyze Coverage" to run AI coverage gap analysis for this client.');
+                    }} />
+                  <Chip label="Third Client" size="small" variant="outlined" color="primary" sx={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      const id = clients?.[2]?.id || clients?.[0]?.id || '';
+                      setClientId(id);
+                      if (id) alert('Selected the third client from the list. Click "Analyze Coverage" to run AI coverage gap analysis for this client.');
+                    }} />
+                </Box>
+              </Paper>
+
               <Button
                 fullWidth
                 variant="contained"
@@ -161,7 +189,7 @@ export default function CoverageAnalyzerPage() {
                             fontWeight: 700,
                           }}
                         >
-                          {result.riskScore}
+                          {safeText(result.riskScore)}
                         </Avatar>
                         <Box sx={{ flex: 1 }}>
                           <Typography variant="h6" fontWeight={600} gutterBottom>Coverage Score</Typography>
@@ -191,17 +219,31 @@ export default function CoverageAnalyzerPage() {
                       </Box>
                       <Paper variant="outlined" sx={{ borderRadius: 2, bgcolor: 'error.50', borderColor: 'error.light' }}>
                         <List dense disablePadding>
-                          {result.gaps.map((gap: string, i: number) => (
-                            <ListItem key={i} sx={{ borderBottom: i < result.gaps.length - 1 ? '1px solid' : 'none', borderColor: 'error.light' }}>
-                              <ListItemIcon sx={{ minWidth: 40 }}>
-                                <Warning color="error" />
-                              </ListItemIcon>
-                              <ListItemText
-                                primary={gap}
-                                primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }}
-                              />
-                            </ListItem>
-                          ))}
+                          {result.gaps.map((gap: any, i: number) => {
+                            const gapText = safeText(gap, 'gap', 'description');
+                            const gapSeverity = safeText(typeof gap === 'object' ? gap.severity : '');
+                            const gapRecommendation = safeText(typeof gap === 'object' ? gap.recommendation : '');
+                            const severityColor = ['high', 'critical'].includes(gapSeverity.toLowerCase()) ? 'error'
+                              : ['medium', 'moderate'].includes(gapSeverity.toLowerCase()) ? 'warning' : 'info';
+
+                            return (
+                              <ListItem key={i} sx={{ borderBottom: i < result.gaps.length - 1 ? '1px solid' : 'none', borderColor: 'error.light' }}>
+                                <ListItemIcon sx={{ minWidth: 40 }}>
+                                  <Warning color="error" />
+                                </ListItemIcon>
+                                <ListItemText
+                                  primary={
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                                      <Typography variant="body2" fontWeight={500} component="span">{gapText}</Typography>
+                                      {gapSeverity && <Chip label={gapSeverity} size="small" color={severityColor as any} sx={{ height: 20, fontSize: '0.7rem' }} />}
+                                    </Box>
+                                  }
+                                  secondary={gapRecommendation || undefined}
+                                  secondaryTypographyProps={{ variant: 'caption' }}
+                                />
+                              </ListItem>
+                            );
+                          })}
                         </List>
                       </Paper>
                     </Box>
@@ -216,17 +258,28 @@ export default function CoverageAnalyzerPage() {
                       </Box>
                       <Paper variant="outlined" sx={{ borderRadius: 2, bgcolor: 'success.50', borderColor: 'success.light' }}>
                         <List dense disablePadding>
-                          {result.recommendations.map((rec: string, i: number) => (
-                            <ListItem key={i} sx={{ borderBottom: i < result.recommendations.length - 1 ? '1px solid' : 'none', borderColor: 'success.light' }}>
-                              <ListItemIcon sx={{ minWidth: 40 }}>
-                                <CheckCircle color="success" />
-                              </ListItemIcon>
-                              <ListItemText
-                                primary={rec}
-                                primaryTypographyProps={{ variant: 'body2' }}
-                              />
-                            </ListItem>
-                          ))}
+                          {result.recommendations.map((rec: any, i: number) => {
+                            const recText = safeText(rec, 'action', 'recommendation', 'description');
+                            const recPriority = safeText(typeof rec === 'object' ? rec.priority : '');
+                            const priorityColor = ['high', 'critical', 'urgent'].includes(recPriority.toLowerCase()) ? 'error'
+                              : ['medium', 'moderate'].includes(recPriority.toLowerCase()) ? 'warning' : 'success';
+
+                            return (
+                              <ListItem key={i} sx={{ borderBottom: i < result.recommendations.length - 1 ? '1px solid' : 'none', borderColor: 'success.light' }}>
+                                <ListItemIcon sx={{ minWidth: 40 }}>
+                                  <CheckCircle color="success" />
+                                </ListItemIcon>
+                                <ListItemText
+                                  primary={
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                                      <Typography variant="body2" component="span">{recText}</Typography>
+                                      {recPriority && <Chip label={recPriority} size="small" color={priorityColor as any} sx={{ height: 20, fontSize: '0.7rem' }} />}
+                                    </Box>
+                                  }
+                                />
+                              </ListItem>
+                            );
+                          })}
                         </List>
                       </Paper>
                     </Box>
@@ -240,7 +293,7 @@ export default function CoverageAnalyzerPage() {
                         <Typography variant="subtitle1" fontWeight={600}>Detailed Analysis</Typography>
                       </Box>
                       <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                        <Typography variant="body2" sx={{ lineHeight: 1.7 }}>{result.explanation}</Typography>
+                        <Typography variant="body2" sx={{ lineHeight: 1.7 }}>{safeText(result.explanation)}</Typography>
                       </Paper>
                     </Box>
                   )}

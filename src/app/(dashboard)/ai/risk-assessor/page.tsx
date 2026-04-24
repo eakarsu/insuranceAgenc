@@ -10,9 +10,10 @@ import {
 } from '@mui/material';
 import {
   Assessment, Warning, CheckCircle, TrendingUp, AutoAwesome, Shield, TipsAndUpdates,
-  AttachMoney, Refresh,
+  AttachMoney, Refresh, AutoFixHigh,
 } from '@mui/icons-material';
 import AIResponseFormatter from '@/components/ai/AIResponseFormatter';
+import { safeText } from '@/lib/ai-render-utils';
 
 export default function RiskAssessorPage() {
   const [clientId, setClientId] = useState('');
@@ -24,7 +25,7 @@ export default function RiskAssessorPage() {
     queryKey: ['clients-list'],
     queryFn: async () => {
       const response = await axios.get('/api/clients?limit=100');
-      return response.data.clients;
+      return response.data.clients || [];
     },
   });
 
@@ -127,6 +128,33 @@ export default function RiskAssessorPage() {
                 sx={{ mb: 3 }}
               />
 
+              {/* Sample Test Data */}
+              <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, mb: 3, bgcolor: 'grey.50', border: '1px dashed', borderColor: 'grey.300' }}>
+                <Typography variant="caption" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary', mb: 1 }}>
+                  <AutoFixHigh fontSize="small" /> SAMPLE TEST DATA
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  <Chip label="Restaurant Risk" size="small" variant="outlined" color="primary" sx={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      setClientId(clients?.[0]?.id || '');
+                      setLineOfBusiness('GENERAL_LIABILITY');
+                      setAdditionalInfo('Fine dining restaurant with full bar. 5,000 sq ft space, seating for 120. Open 6 days/week. Annual revenue $1.8M. Commercial kitchen with fryers and gas grills. Live entertainment on weekends. Valet parking service. Wine cellar valued at $50,000. 3-year claims history: 1 slip-and-fall ($12,000 settled), 1 food illness complaint (dismissed).');
+                    }} />
+                  <Chip label="Construction Site" size="small" variant="outlined" color="primary" sx={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      setClientId(clients?.[1]?.id || clients?.[0]?.id || '');
+                      setLineOfBusiness('WORKERS_COMP');
+                      setAdditionalInfo('General contractor specializing in commercial build-outs. 35 field employees, 10 office staff. Work at heights up to 30 feet. Use heavy machinery including cranes and forklifts. Subcontractors used for electrical and plumbing. OSHA citations: none in past 5 years. EMR: 0.92. Annual payroll $2.1M. Drug testing program in place.');
+                    }} />
+                  <Chip label="Cyber Risk" size="small" variant="outlined" color="primary" sx={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      setClientId(clients?.[2]?.id || clients?.[0]?.id || '');
+                      setLineOfBusiness('COMMERCIAL_PROPERTY');
+                      setAdditionalInfo('Healthcare technology company handling PHI for 50+ medical practices. 200 employees, 80% remote workers. Cloud-based SaaS platform processing 10,000 patient records daily. SOC 2 Type II certified. Previous data breach in 2022 (contained, 500 records). Annual revenue $15M. Using AWS infrastructure with encryption at rest and in transit.');
+                    }} />
+                </Box>
+              </Paper>
+
               <Button
                 fullWidth
                 variant="contained"
@@ -201,7 +229,7 @@ export default function RiskAssessorPage() {
                             fontWeight: 700,
                           }}
                         >
-                          {result.riskScore}
+                          {safeText(result.riskScore)}
                         </Avatar>
                         <Box sx={{ flex: 1 }}>
                           <Typography variant="h6" fontWeight={600} gutterBottom>Overall Risk Score</Typography>
@@ -229,47 +257,56 @@ export default function RiskAssessorPage() {
                         <Typography variant="subtitle1" fontWeight={600}>Risk Factors Analyzed</Typography>
                       </Box>
                       <Paper variant="outlined" sx={{ borderRadius: 2 }}>
-                        {result.factors.map((factor: any, idx: number) => (
-                          <Box
-                            key={idx}
-                            sx={{
-                              p: 2,
-                              borderBottom: idx < result.factors.length - 1 ? '1px solid' : 'none',
-                              borderColor: 'divider',
-                            }}
-                          >
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                              <Typography variant="body2" fontWeight={500}>
-                                {typeof factor === 'string' ? factor : factor.name || factor.factor}
-                              </Typography>
-                              {(factor.score !== undefined || factor.weight) && (
-                                <Box sx={{ display: 'flex', gap: 1 }}>
-                                  {factor.weight && (
-                                    <Chip label={factor.weight} size="small" variant="outlined" />
-                                  )}
-                                  {factor.impact && (
-                                    <Chip
-                                      label={factor.impact}
-                                      size="small"
-                                      color={factor.impact === 'Positive' ? 'success' : factor.impact === 'Negative' ? 'error' : 'default'}
-                                    />
-                                  )}
-                                  {factor.score !== undefined && (
-                                    <Typography variant="body2" fontWeight={600}>{factor.score}</Typography>
+                        {result.factors.map((factor: any, idx: number) => {
+                          const factorName = safeText(factor, 'factor', 'name');
+                          const factorDetail = safeText(typeof factor === 'object' ? (factor.detail || factor.description) : '', 'detail');
+                          const factorCategory = safeText(typeof factor === 'object' ? factor.category : '');
+                          const impactLabel = safeText(typeof factor === 'object' ? factor.impact : '');
+                          const impactColor = ['high', 'negative', 'severe'].includes(impactLabel.toLowerCase()) ? 'error'
+                            : ['low', 'positive', 'minimal'].includes(impactLabel.toLowerCase()) ? 'success' : 'warning';
+
+                          return (
+                            <Box
+                              key={idx}
+                              sx={{
+                                p: 2,
+                                borderBottom: idx < result.factors.length - 1 ? '1px solid' : 'none',
+                                borderColor: 'divider',
+                              }}
+                            >
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Typography variant="body2" fontWeight={600}>{factorName}</Typography>
+                                  {factorCategory && (
+                                    <Chip label={factorCategory} size="small" variant="outlined" sx={{ fontSize: '0.7rem', height: 22 }} />
                                   )}
                                 </Box>
+                                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                  {factor.weight !== undefined && (
+                                    <Chip label={`Weight: ${safeText(factor.weight)}`} size="small" variant="outlined" />
+                                  )}
+                                  {impactLabel && (
+                                    <Chip label={impactLabel} size="small" color={impactColor as any} />
+                                  )}
+                                  {factor.score !== undefined && (
+                                    <Typography variant="body2" fontWeight={700}>{safeText(factor.score)}</Typography>
+                                  )}
+                                </Box>
+                              </Box>
+                              {factorDetail && (
+                                <Typography variant="caption" color="text.secondary">{factorDetail}</Typography>
+                              )}
+                              {factor.score !== undefined && typeof factor.score === 'number' && factor.score <= 100 && (
+                                <LinearProgress
+                                  variant="determinate"
+                                  value={Math.min(factor.score, 100)}
+                                  color={getScoreColor(factor.score) as any}
+                                  sx={{ height: 6, borderRadius: 1, mt: 1 }}
+                                />
                               )}
                             </Box>
-                            {factor.score !== undefined && (
-                              <LinearProgress
-                                variant="determinate"
-                                value={factor.score}
-                                color={getScoreColor(factor.score) as any}
-                                sx={{ height: 6, borderRadius: 1 }}
-                              />
-                            )}
-                          </Box>
-                        ))}
+                          );
+                        })}
                       </Paper>
                     </Box>
                   )}
@@ -281,19 +318,32 @@ export default function RiskAssessorPage() {
                         <TipsAndUpdates color="success" />
                         <Typography variant="subtitle1" fontWeight={600}>Recommendations</Typography>
                       </Box>
-                      <Paper variant="outlined" sx={{ borderRadius: 2, bgcolor: 'success.50' }}>
+                      <Paper variant="outlined" sx={{ borderRadius: 2, bgcolor: '#e8f5e9' }}>
                         <List dense disablePadding>
-                          {result.recommendations.map((rec: string, i: number) => (
-                            <ListItem key={i} sx={{ borderBottom: i < result.recommendations.length - 1 ? '1px solid' : 'none', borderColor: 'success.light' }}>
-                              <ListItemIcon sx={{ minWidth: 40 }}>
-                                <CheckCircle color="success" />
-                              </ListItemIcon>
-                              <ListItemText
-                                primary={rec}
-                                primaryTypographyProps={{ variant: 'body2' }}
-                              />
-                            </ListItem>
-                          ))}
+                          {result.recommendations.map((rec: any, i: number) => {
+                            const recText = safeText(rec, 'recommendation', 'text', 'action');
+                            const recImpact = safeText(typeof rec === 'object' ? (rec.impact || rec.priority) : '');
+                            const recType = safeText(typeof rec === 'object' ? rec.type : '');
+                            const impactColor = ['high', 'critical', 'immediate'].includes(recImpact.toLowerCase?.() || '') ? 'error'
+                              : ['medium', 'moderate'].includes(recImpact.toLowerCase?.() || '') ? 'warning' : 'success';
+
+                            return (
+                              <ListItem key={i} sx={{ borderBottom: i < result.recommendations.length - 1 ? '1px solid' : 'none', borderColor: '#c8e6c9' }}>
+                                <ListItemIcon sx={{ minWidth: 40 }}>
+                                  <CheckCircle color="success" />
+                                </ListItemIcon>
+                                <ListItemText
+                                  primary={
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                                      <Typography variant="body2" component="span">{recText}</Typography>
+                                      {recImpact && <Chip label={recImpact} size="small" color={impactColor as any} sx={{ height: 20, fontSize: '0.7rem' }} />}
+                                      {recType && <Chip label={recType.replace(/_/g, ' ')} size="small" variant="outlined" sx={{ height: 20, fontSize: '0.7rem' }} />}
+                                    </Box>
+                                  }
+                                />
+                              </ListItem>
+                            );
+                          })}
                         </List>
                       </Paper>
                     </Box>
@@ -304,20 +354,60 @@ export default function RiskAssessorPage() {
                     <Box sx={{ mb: 3 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                         <AttachMoney color="info" />
-                        <Typography variant="subtitle1" fontWeight={600}>Suggested Pricing</Typography>
+                        <Typography variant="subtitle1" fontWeight={600}>Pricing Analysis</Typography>
                       </Box>
-                      <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar sx={{ bgcolor: 'info.main' }}>$</Avatar>
-                        <Box>
-                          <Typography variant="h5" fontWeight={700}>
-                            ${typeof result.pricing === 'object' ? Number(result.pricing.premium || result.pricing.suggested).toLocaleString() : Number(result.pricing).toLocaleString()}
-                          </Typography>
-                          {result.pricing.range && (
-                            <Typography variant="body2" color="text.secondary">
-                              Range: {result.pricing.range}
+                      <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                        {typeof result.pricing === 'object' ? (
+                          <Box>
+                            {(result.pricing.suggestedModifier !== undefined || result.pricing.premium || result.pricing.suggested) && (
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                                <Avatar sx={{ bgcolor: 'info.main' }}>$</Avatar>
+                                <Typography variant="h5" fontWeight={700}>
+                                  {result.pricing.suggestedModifier !== undefined
+                                    ? `${safeText(result.pricing.suggestedModifier > 0 ? '+' : '')}${safeText(result.pricing.suggestedModifier)}% modifier`
+                                    : `$${Number(safeText(result.pricing.premium || result.pricing.suggested || 0)).toLocaleString()}`}
+                                </Typography>
+                              </Box>
+                            )}
+                            {result.pricing.basis && (
+                              <Typography variant="body2" color="text.secondary" sx={{ ml: 7 }}>{safeText(result.pricing.basis)}</Typography>
+                            )}
+                            {result.pricing.credibility !== undefined && (
+                              <Typography variant="body2" color="text.secondary" sx={{ ml: 7 }}>Credibility: {safeText(result.pricing.credibility)}</Typography>
+                            )}
+                            {result.pricing.range && (
+                              <Typography variant="body2" color="text.secondary" sx={{ ml: 7 }}>Range: {safeText(result.pricing.range)}</Typography>
+                            )}
+                          </Box>
+                        ) : (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Avatar sx={{ bgcolor: 'info.main' }}>$</Avatar>
+                            <Typography variant="h5" fontWeight={700}>
+                              ${Number(safeText(result.pricing)).toLocaleString()}
                             </Typography>
-                          )}
-                        </Box>
+                          </Box>
+                        )}
+                      </Paper>
+                    </Box>
+                  )}
+
+                  {/* Benchmark Comparison */}
+                  {result.benchmarkComparison && (
+                    <Box sx={{ mb: 3 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                        <TrendingUp color="primary" />
+                        <Typography variant="subtitle1" fontWeight={600}>Industry Benchmark</Typography>
+                      </Box>
+                      <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: '#e3f2fd' }}>
+                        {result.benchmarkComparison.industryAverage && (
+                          <Typography variant="body2" sx={{ mb: 0.5 }}><strong>Industry Average:</strong> {safeText(result.benchmarkComparison.industryAverage)}</Typography>
+                        )}
+                        {result.benchmarkComparison.clientPosition && (
+                          <Typography variant="body2" sx={{ mb: 0.5 }}><strong>Client Position:</strong> {safeText(result.benchmarkComparison.clientPosition)}</Typography>
+                        )}
+                        {result.benchmarkComparison.trend && (
+                          <Typography variant="body2"><strong>Trend:</strong> {safeText(result.benchmarkComparison.trend)}</Typography>
+                        )}
                       </Paper>
                     </Box>
                   )}

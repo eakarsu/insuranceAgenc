@@ -1,11 +1,14 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { Box, CircularProgress } from '@mui/material';
+import { useEffect, useRef, useState } from 'react';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import NotificationProvider from '@/components/NotificationProvider';
+import axios from 'axios';
 
 export default function DashboardLayout({
   children,
@@ -14,12 +17,35 @@ export default function DashboardLayout({
 }) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const sessionChecked = useRef(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/login');
+      router.push('/auto-login');
     }
   }, [status, router]);
+
+  // Verify session user exists in DB — auto-refresh if stale (e.g. after DB reset)
+  useEffect(() => {
+    if (status !== 'authenticated' || sessionChecked.current || refreshing) return;
+    sessionChecked.current = true;
+
+    axios.get('/api/health').then(async (res) => {
+      // If health check works but session user ID is stale, the next API call would fail.
+      // Do a quick check by fetching dashboard stats (which requires a valid user).
+      try {
+        await axios.get('/api/dashboard/stats');
+      } catch (err: any) {
+        if (err?.response?.status === 401 || err?.response?.status === 500) {
+          // Session is stale — auto sign-out and re-login
+          setRefreshing(true);
+          await signOut({ redirect: false });
+          router.push('/auto-login');
+        }
+      }
+    }).catch(() => {});
+  }, [status, router, refreshing]);
 
   if (status === 'loading') {
     return (
@@ -41,22 +67,26 @@ export default function DashboardLayout({
   }
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      <Sidebar />
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Header />
-        <Box
-          component="main"
-          sx={{
-            flex: 1,
-            p: 3,
-            backgroundColor: '#f5f7fa',
-            overflow: 'auto',
-          }}
-        >
-          {children}
+    <NotificationProvider>
+      <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+        <Sidebar />
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <Header />
+          <Box
+            component="main"
+            sx={{
+              flex: 1,
+              p: 3,
+              backgroundColor: '#f5f7fa',
+              overflow: 'auto',
+            }}
+          >
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
+          </Box>
         </Box>
       </Box>
-    </Box>
+    </NotificationProvider>
   );
 }

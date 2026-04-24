@@ -40,7 +40,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         type: body.type,
         subject: body.subject,
         content: body.content,
-        variables: [...new Set(variables)],
+        variables: Array.from(new Set(variables)) as string[],
         status: body.status,
       },
     });

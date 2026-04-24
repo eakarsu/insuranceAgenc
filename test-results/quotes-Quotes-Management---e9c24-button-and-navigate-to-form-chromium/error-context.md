@@ -1,0 +1,332 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - heading "InsureFlow" [level=5] [ref=e6]
+        - button [ref=e7] [cursor=pointer]:
+          - img [ref=e8]
+      - separator [ref=e10]
+      - list [ref=e12]:
+        - listitem [ref=e14]:
+          - button "Dashboard" [ref=e15] [cursor=pointer]:
+            - img [ref=e17]
+            - generic [ref=e20]: Dashboard
+        - generic [ref=e21]:
+          - listitem [ref=e22]:
+            - button "Clients" [ref=e23] [cursor=pointer]:
+              - img [ref=e25]
+              - generic [ref=e28]: Clients
+              - img [ref=e29]
+          - generic [ref=e34]:
+            - button "All Clients" [ref=e35] [cursor=pointer]:
+              - img [ref=e37]
+              - generic [ref=e40]: All Clients
+            - button "Personal Lines" [ref=e41] [cursor=pointer]:
+              - img [ref=e43]
+              - generic [ref=e46]: Personal Lines
+            - button "Commercial Lines" [ref=e47] [cursor=pointer]:
+              - img [ref=e49]
+              - generic [ref=e52]: Commercial Lines
+            - button "Households" [ref=e53] [cursor=pointer]:
+              - img [ref=e55]
+              - generic [ref=e58]: Households
+            - button "Contacts" [ref=e59] [cursor=pointer]:
+              - img [ref=e61]
+              - generic [ref=e64]: Contacts
+            - button "Life Events" [ref=e65] [cursor=pointer]:
+              - img [ref=e67]
+              - generic [ref=e70]: Life Events
+            - button "Documents" [ref=e71] [cursor=pointer]:
+              - img [ref=e73]
+              - generic [ref=e76]: Documents
+        - listitem [ref=e78]:
+          - button "Policies" [ref=e79] [cursor=pointer]:
+            - img [ref=e81]
+            - generic [ref=e85]: Policies
+            - img [ref=e86]
+        - listitem [ref=e89]:
+          - button "Quotes" [ref=e90] [cursor=pointer]:
+            - img [ref=e92]
+            - generic [ref=e95]: Quotes
+            - img [ref=e96]
+        - listitem [ref=e99]:
+          - button "Claims" [ref=e100] [cursor=pointer]:
+            - img [ref=e102]
+            - generic [ref=e105]: Claims
+            - img [ref=e106]
+        - listitem [ref=e109]:
+          - button "Commissions" [ref=e110] [cursor=pointer]:
+            - img [ref=e112]
+            - generic [ref=e115]: Commissions
+            - img [ref=e116]
+        - listitem [ref=e119]:
+          - button "Marketing" [ref=e120] [cursor=pointer]:
+            - img [ref=e122]
+            - generic [ref=e125]: Marketing
+            - img [ref=e126]
+        - listitem [ref=e129]:
+          - button "AI Features" [ref=e130] [cursor=pointer]:
+            - img [ref=e132]
+            - generic [ref=e136]: AI Features
+            - img [ref=e137]
+        - listitem [ref=e140]:
+          - button "Settings" [ref=e141] [cursor=pointer]:
+            - img [ref=e143]
+            - generic [ref=e146]: Settings
+      - separator [ref=e147]
+      - generic [ref=e148]:
+        - generic [ref=e149] [cursor=pointer]: A
+        - generic [ref=e150]:
+          - paragraph [ref=e151]: Admin User
+          - text: ADMIN
+    - generic [ref=e152]:
+      - banner [ref=e153]:
+        - generic [ref=e154]:
+          - generic [ref=e155]:
+            - img [ref=e156]
+            - textbox "Search clients, policies, quotes..." [ref=e159]
+          - button "Quick Add" [ref=e160] [cursor=pointer]:
+            - img [ref=e161]
+          - button "Notifications" [ref=e163] [cursor=pointer]:
+            - generic [ref=e164]:
+              - img [ref=e165]
+              - generic: "0"
+      - main [ref=e167]:
+        - generic [ref=e168]:
+          - generic [ref=e169]:
+            - generic [ref=e170]:
+              - heading "Quotes" [level=4] [ref=e171]
+              - paragraph [ref=e172]: Manage quotes and proposals
+            - button "New Quote" [active] [ref=e173] [cursor=pointer]:
+              - img [ref=e175]
+              - text: New Quote
+          - generic [ref=e179]:
+            - generic [ref=e182]:
+              - img [ref=e184]
+              - textbox "Search quotes..." [ref=e186]
+              - group
+            - generic [ref=e188]:
+              - generic: Status
+              - generic [ref=e189]:
+                - combobox [ref=e190] [cursor=pointer]
+                - textbox
+                - img
+                - group:
+                  - generic: Status
+            - button "Clear Filters" [ref=e192] [cursor=pointer]: Clear Filters
+          - generic [ref=e194]:
+            - grid [ref=e195]:
+              - 'row "Quote # Client Type Carrier Premium Eff. Date Status Created" [ref=e196]':
+                - 'columnheader "Quote #" [ref=e197] [cursor=pointer]':
+                  - generic [ref=e199]: "Quote #"
+                  - generic [ref=e200]:
+                    - img
+                - columnheader "Client" [ref=e201] [cursor=pointer]:
+                  - generic [ref=e203]: Client
+                  - generic [ref=e204]:
+                    - img
+                - columnheader "Type" [ref=e205] [cursor=pointer]:
+                  - generic [ref=e207]: Type
+                  - generic [ref=e208]:
+                    - img
+                - columnheader "Carrier" [ref=e209] [cursor=pointer]:
+                  - generic [ref=e211]: Carrier
+                  - generic [ref=e212]:
+                    - img
+                - columnheader "Premium" [ref=e213] [cursor=pointer]:
+                  - generic [ref=e215]: Premium
+                  - generic [ref=e216]:
+                    - img
+                - columnheader "Eff. Date" [ref=e217] [cursor=pointer]:
+                  - generic [ref=e219]: Eff. Date
+                  - generic [ref=e220]:
+                    - img
+                - columnheader "Status" [ref=e221] [cursor=pointer]:
+                  - generic [ref=e223]: Status
+                  - generic [ref=e224]:
+                    - img
+                - columnheader "Created" [ref=e225] [cursor=pointer]:
+                  - generic [ref=e227]: Created
+                  - generic [ref=e228]:
+                    - img
+                - columnheader [ref=e229]:
+                  - generic [ref=e230]:
+                    - img
+              - rowgroup [ref=e231]:
+                - row "QT-2024-00015 Margaret Martin COMMERCIAL AUTO Hanover Insurance $3,885 03/01/2025 DRAFT 12/01/2025" [ref=e232]:
+                  - gridcell "QT-2024-00015" [ref=e233]:
+                    - paragraph [ref=e234]: QT-2024-00015
+                  - gridcell "Margaret Martin" [ref=e235]:
+                    - paragraph [ref=e236]: Margaret Martin
+                  - gridcell "COMMERCIAL AUTO" [ref=e237]:
+                    - paragraph [ref=e238]: COMMERCIAL AUTO
+                  - gridcell "Hanover Insurance" [ref=e239]
+                  - gridcell "$3,885" [ref=e240]
+                  - gridcell "03/01/2025" [ref=e241]
+                  - gridcell "DRAFT" [ref=e242]:
+                    - generic [ref=e244]: DRAFT
+                  - gridcell "12/01/2025" [ref=e245]
+                  - gridcell [ref=e246]:
+                    - button [ref=e247] [cursor=pointer]:
+                      - img [ref=e248]
+                - row "QT-2024-00025 Quick Transport LLC COMMERCIAL AUTO USAA $6,035 01/01/2025 ACCEPTED 12/01/2025" [ref=e250]:
+                  - gridcell "QT-2024-00025" [ref=e251]:
+                    - paragraph [ref=e252]: QT-2024-00025
+                  - gridcell "Quick Transport LLC" [ref=e253]:
+                    - paragraph [ref=e254]: Quick Transport LLC
+                  - gridcell "COMMERCIAL AUTO" [ref=e255]:
+                    - paragraph [ref=e256]: COMMERCIAL AUTO
+                  - gridcell "USAA" [ref=e257]
+                  - gridcell "$6,035" [ref=e258]
+                  - gridcell "01/01/2025" [ref=e259]
+                  - gridcell "ACCEPTED" [ref=e260]:
+                    - generic [ref=e262]: ACCEPTED
+                  - gridcell "12/01/2025" [ref=e263]
+                  - gridcell [ref=e264]:
+                    - button [ref=e265] [cursor=pointer]:
+                      - img [ref=e266]
+                - row "QT-2024-00024 Downtown Medical Group UMBRELLA GEICO $5,820 12/01/2025 PROPOSED 12/01/2025" [ref=e268]:
+                  - gridcell "QT-2024-00024" [ref=e269]:
+                    - paragraph [ref=e270]: QT-2024-00024
+                  - gridcell "Downtown Medical Group" [ref=e271]:
+                    - paragraph [ref=e272]: Downtown Medical Group
+                  - gridcell "UMBRELLA" [ref=e273]:
+                    - paragraph [ref=e274]: UMBRELLA
+                  - gridcell "GEICO" [ref=e275]
+                  - gridcell "$5,820" [ref=e276]
+                  - gridcell "12/01/2025" [ref=e277]
+                  - gridcell "PROPOSED" [ref=e278]:
+                    - generic [ref=e280]: PROPOSED
+                  - gridcell "12/01/2025" [ref=e281]
+                  - gridcell [ref=e282]:
+                    - button [ref=e283] [cursor=pointer]:
+                      - img [ref=e284]
+                - row "QT-2024-00022 Miller's Family Restaurant HOMEOWNERS Liberty Mutual $5,390 10/01/2025 DRAFT 12/01/2025" [ref=e286]:
+                  - gridcell "QT-2024-00022" [ref=e287]:
+                    - paragraph [ref=e288]: QT-2024-00022
+                  - gridcell "Miller's Family Restaurant" [ref=e289]:
+                    - paragraph [ref=e290]: Miller's Family Restaurant
+                  - gridcell "HOMEOWNERS" [ref=e291]:
+                    - paragraph [ref=e292]: HOMEOWNERS
+                  - gridcell "Liberty Mutual" [ref=e293]
+                  - gridcell "$5,390" [ref=e294]
+                  - gridcell "10/01/2025" [ref=e295]
+                  - gridcell "DRAFT" [ref=e296]:
+                    - generic [ref=e298]: DRAFT
+                  - gridcell "12/01/2025" [ref=e299]
+                  - gridcell [ref=e300]:
+                    - button [ref=e301] [cursor=pointer]:
+                      - img [ref=e302]
+                - row "QT-2024-00021 Chen Tech Solutions LLC PERSONAL AUTO State Farm $5,175 09/01/2025 BOUND 12/01/2025" [ref=e304]:
+                  - gridcell "QT-2024-00021" [ref=e305]:
+                    - paragraph [ref=e306]: QT-2024-00021
+                  - gridcell "Chen Tech Solutions LLC" [ref=e307]:
+                    - paragraph [ref=e308]: Chen Tech Solutions LLC
+                  - gridcell "PERSONAL AUTO" [ref=e309]:
+                    - paragraph [ref=e310]: PERSONAL AUTO
+                  - gridcell "State Farm" [ref=e311]
+                  - gridcell "$5,175" [ref=e312]
+                  - gridcell "09/01/2025" [ref=e313]
+                  - gridcell "BOUND" [ref=e314]:
+                    - generic [ref=e316]: BOUND
+                  - gridcell "12/01/2025" [ref=e317]
+                  - gridcell [ref=e318]:
+                    - button [ref=e319] [cursor=pointer]:
+                      - img [ref=e320]
+                - row "QT-2024-00023 ABC Manufacturing Inc RENTERS Allstate Insurance $5,605 11/01/2025 QUOTED 12/01/2025" [ref=e322]:
+                  - gridcell "QT-2024-00023" [ref=e323]:
+                    - paragraph [ref=e324]: QT-2024-00023
+                  - gridcell "ABC Manufacturing Inc" [ref=e325]:
+                    - paragraph [ref=e326]: ABC Manufacturing Inc
+                  - gridcell "RENTERS" [ref=e327]:
+                    - paragraph [ref=e328]: RENTERS
+                  - gridcell "Allstate Insurance" [ref=e329]
+                  - gridcell "$5,605" [ref=e330]
+                  - gridcell "11/01/2025" [ref=e331]
+                  - gridcell "QUOTED" [ref=e332]:
+                    - generic [ref=e334]: QUOTED
+                  - gridcell "12/01/2025" [ref=e335]
+                  - gridcell [ref=e336]:
+                    - button [ref=e337] [cursor=pointer]:
+                      - img [ref=e338]
+                - row "QT-2024-00008 William Miller WORKERS COMP Allstate Insurance $2,380 08/01/2025 DRAFT 12/01/2025" [ref=e340]:
+                  - gridcell "QT-2024-00008" [ref=e341]:
+                    - paragraph [ref=e342]: QT-2024-00008
+                  - gridcell "William Miller" [ref=e343]:
+                    - paragraph [ref=e344]: William Miller
+                  - gridcell "WORKERS COMP" [ref=e345]:
+                    - paragraph [ref=e346]: WORKERS COMP
+                  - gridcell "Allstate Insurance" [ref=e347]
+                  - gridcell "$2,380" [ref=e348]
+                  - gridcell "08/01/2025" [ref=e349]
+                  - gridcell "DRAFT" [ref=e350]:
+                    - generic [ref=e352]: DRAFT
+                  - gridcell "12/01/2025" [ref=e353]
+                  - gridcell [ref=e354]:
+                    - button [ref=e355] [cursor=pointer]:
+                      - img [ref=e356]
+                - row "QT-2024-00012 Richard Jackson HOMEOWNERS Cincinnati Insurance $3,240 12/01/2025 DECLINED 12/01/2025" [ref=e358]:
+                  - gridcell "QT-2024-00012" [ref=e359]:
+                    - paragraph [ref=e360]: QT-2024-00012
+                  - gridcell "Richard Jackson" [ref=e361]:
+                    - paragraph [ref=e362]: Richard Jackson
+                  - gridcell "HOMEOWNERS" [ref=e363]:
+                    - paragraph [ref=e364]: HOMEOWNERS
+                  - gridcell "Cincinnati Insurance" [ref=e365]
+                  - gridcell "$3,240" [ref=e366]
+                  - gridcell "12/01/2025" [ref=e367]
+                  - gridcell "DECLINED" [ref=e368]:
+                    - generic [ref=e370]: DECLINED
+                  - gridcell "12/01/2025" [ref=e371]
+                  - gridcell [ref=e372]:
+                    - button [ref=e373] [cursor=pointer]:
+                      - img [ref=e374]
+                - row "QT-2024-00014 Joseph Harris UMBRELLA CNA Insurance $3,670 02/01/2025 BOUND 12/01/2025" [ref=e376]:
+                  - gridcell "QT-2024-00014" [ref=e377]:
+                    - paragraph [ref=e378]: QT-2024-00014
+                  - gridcell "Joseph Harris" [ref=e379]:
+                    - paragraph [ref=e380]: Joseph Harris
+                  - gridcell "UMBRELLA" [ref=e381]:
+                    - paragraph [ref=e382]: UMBRELLA
+                  - gridcell "CNA Insurance" [ref=e383]
+                  - gridcell "$3,670" [ref=e384]
+                  - gridcell "02/01/2025" [ref=e385]
+                  - gridcell "BOUND" [ref=e386]:
+                    - generic [ref=e388]: BOUND
+                  - gridcell "12/01/2025" [ref=e389]
+                  - gridcell [ref=e390]:
+                    - button [ref=e391] [cursor=pointer]:
+                      - img [ref=e392]
+                - row "QT-2024-00010 David Taylor CYBER USAA $2,810 10/01/2025 PROPOSED 12/01/2025" [ref=e394]:
+                  - gridcell "QT-2024-00010" [ref=e395]:
+                    - paragraph [ref=e396]: QT-2024-00010
+                  - gridcell "David Taylor" [ref=e397]:
+                    - paragraph [ref=e398]: David Taylor
+                  - gridcell "CYBER" [ref=e399]:
+                    - paragraph [ref=e400]: CYBER
+                  - gridcell "USAA" [ref=e401]
+                  - gridcell "$2,810" [ref=e402]
+                  - gridcell "10/01/2025" [ref=e403]
+                  - gridcell "PROPOSED" [ref=e404]:
+                    - generic [ref=e406]: PROPOSED
+                  - gridcell "12/01/2025" [ref=e407]
+                  - gridcell [ref=e408]:
+                    - button [ref=e409] [cursor=pointer]:
+                      - img [ref=e410]
+            - generic [ref=e414]:
+              - paragraph [ref=e415]: "Rows per page:"
+              - generic [ref=e416]:
+                - 'combobox "Rows per page: 10" [ref=e417] [cursor=pointer]': "10"
+                - textbox: "10"
+                - img
+              - paragraph [ref=e418]: 1–10 of 25
+              - generic [ref=e419]:
+                - button "Go to previous page" [disabled]:
+                  - img
+                - button "Go to next page" [ref=e420] [cursor=pointer]:
+                  - img [ref=e421]
+  - alert [ref=e423]
+```

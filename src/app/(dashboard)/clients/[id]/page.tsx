@@ -106,11 +106,16 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
   // Dialog states
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
   const [lifeEventDialogOpen, setLifeEventDialogOpen] = useState(false);
+  const [portalDialogOpen, setPortalDialogOpen] = useState(false);
+  const [coverageDialogOpen, setCoverageDialogOpen] = useState(false);
+  const [coverageResult, setCoverageResult] = useState<any>(null);
+  const [coverageLoading, setCoverageLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
   // Form states
   const [documentForm, setDocumentForm] = useState({ name: '', type: 'OTHER', file: null as File | null });
   const [lifeEventForm, setLifeEventForm] = useState({ title: '', type: 'MARRIAGE', eventDate: '', description: '' });
+  const [portalForm, setPortalForm] = useState({ email: '', password: '' });
 
   const { data: client, isLoading } = useQuery<Client>({
     queryKey: ['client', id],
@@ -134,6 +139,29 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
     },
     onError: () => {
       setSnackbar({ open: true, message: 'Failed to add document', severity: 'error' });
+    },
+  });
+
+  const hasPortalAccess = !!(client as any)?.customerAuth;
+
+  // Portal access mutation
+  const portalMutation = useMutation({
+    mutationFn: async (data: { clientId: string; email: string; password: string }) => {
+      if (hasPortalAccess) {
+        const response = await axios.patch('/api/customer/auth/reset-password', { clientId: data.clientId, newPassword: data.password });
+        return response.data;
+      }
+      const response = await axios.post('/api/customer/auth/register', data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['client', id] });
+      setPortalDialogOpen(false);
+      setPortalForm({ email: '', password: '' });
+      setSnackbar({ open: true, message: hasPortalAccess ? 'Password reset successfully' : 'Portal access created successfully', severity: 'success' });
+    },
+    onError: (error: any) => {
+      setSnackbar({ open: true, message: error.response?.data?.error || 'Failed to update portal access', severity: 'error' });
     },
   });
 
@@ -210,6 +238,34 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
           Back
         </Button>
         <Box sx={{ flex: 1 }} />
+        <Button
+          variant="outlined"
+          color="secondary"
+          onClick={async () => {
+            setCoverageDialogOpen(true);
+            setCoverageLoading(true);
+            setCoverageResult(null);
+            try {
+              const res = await axios.post('/api/ai/coverage-advisor', { clientId: id });
+              setCoverageResult(res.data);
+            } catch {
+              setSnackbar({ open: true, message: 'Failed to analyze coverage', severity: 'error' });
+            } finally {
+              setCoverageLoading(false);
+            }
+          }}
+        >
+          AI Coverage Advisor
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={() => {
+            setPortalForm({ email: client?.email || '', password: '' });
+            setPortalDialogOpen(true);
+          }}
+        >
+          {hasPortalAccess ? 'Reset Portal Password' : 'Create Portal Access'}
+        </Button>
         <Button
           variant="outlined"
           startIcon={<Edit />}
@@ -790,6 +846,109 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
           >
             {lifeEventMutation.isPending ? 'Adding...' : 'Add Life Event'}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Portal Access Dialog */}
+      <Dialog open={portalDialogOpen} onClose={() => setPortalDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>{hasPortalAccess ? 'Reset Portal Password' : 'Create Customer Portal Access'}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            {hasPortalAccess && (
+              <Alert severity="info" sx={{ borderRadius: 2 }}>
+                Portal account exists: <strong>{(client as any).customerAuth.email}</strong>
+              </Alert>
+            )}
+            {!hasPortalAccess && (
+              <TextField
+                label="Portal Email"
+                type="email"
+                value={portalForm.email}
+                onChange={(e) => setPortalForm({ ...portalForm, email: e.target.value })}
+                fullWidth
+                required
+              />
+            )}
+            <TextField
+              label={hasPortalAccess ? 'New Password' : 'Portal Password'}
+              type="password"
+              value={portalForm.password}
+              onChange={(e) => setPortalForm({ ...portalForm, password: e.target.value })}
+              fullWidth
+              required
+              helperText="Minimum 8 characters"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPortalDialogOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={() => portalMutation.mutate({ clientId: id, email: portalForm.email, password: portalForm.password })}
+            disabled={(!hasPortalAccess && !portalForm.email) || portalForm.password.length < 8 || portalMutation.isPending}
+          >
+            {portalMutation.isPending ? 'Saving...' : hasPortalAccess ? 'Reset Password' : 'Create Access'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* AI Coverage Advisor Dialog */}
+      <Dialog open={coverageDialogOpen} onClose={() => setCoverageDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>AI Coverage Advisor</DialogTitle>
+        <DialogContent dividers>
+          {coverageLoading ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, gap: 2 }}>
+              <Skeleton variant="circular" width={48} height={48} />
+              <Typography color="text.secondary">Analyzing coverage...</Typography>
+              <Skeleton variant="rectangular" width="100%" height={200} sx={{ borderRadius: 2 }} />
+            </Box>
+          ) : coverageResult ? (
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                <Typography variant="h6" fontWeight={600}>Coverage Score:</Typography>
+                <Chip
+                  label={`${coverageResult.OVERALL_SCORE || 0}/10`}
+                  color={
+                    (coverageResult.OVERALL_SCORE || 0) >= 7 ? 'success' :
+                    (coverageResult.OVERALL_SCORE || 0) >= 4 ? 'warning' : 'error'
+                  }
+                  sx={{ fontWeight: 700, fontSize: '1rem', px: 1 }}
+                />
+              </Box>
+
+              {coverageResult.COVERAGE_GAPS?.length > 0 && (
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle1" fontWeight={600} gutterBottom>Coverage Gaps</Typography>
+                  {coverageResult.COVERAGE_GAPS.map((gap: string, i: number) => (
+                    <Chip key={i} label={gap} size="small" color="warning" variant="outlined" sx={{ mr: 0.5, mb: 0.5 }} />
+                  ))}
+                </Box>
+              )}
+
+              {coverageResult.RECOMMENDATIONS?.length > 0 && (
+                <Box>
+                  <Typography variant="subtitle1" fontWeight={600} gutterBottom>Recommendations</Typography>
+                  {coverageResult.RECOMMENDATIONS.map((rec: any, i: number) => (
+                    <Paper key={i} variant="outlined" sx={{ p: 2, mb: 1.5, borderRadius: 2 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                        <Typography fontWeight={600}>{rec.product}</Typography>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Chip label={rec.priority} size="small" color={rec.priority === 'HIGH' ? 'error' : rec.priority === 'MEDIUM' ? 'warning' : 'info'} />
+                          {rec.estimatedPremium && <Chip label={rec.estimatedPremium} size="small" variant="outlined" />}
+                        </Box>
+                      </Box>
+                      <Typography variant="body2" color="text.secondary">{rec.explanation}</Typography>
+                    </Paper>
+                  ))}
+                </Box>
+              )}
+            </Box>
+          ) : (
+            <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>No results available</Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCoverageDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
 

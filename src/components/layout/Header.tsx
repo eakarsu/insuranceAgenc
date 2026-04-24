@@ -6,7 +6,6 @@ import {
   AppBar,
   Toolbar,
   IconButton,
-  InputBase,
   Badge,
   Menu,
   MenuItem,
@@ -17,20 +16,15 @@ import {
   ListItem,
   ListItemText,
   ListItemIcon,
-  Paper,
   Tooltip,
-  Avatar,
 } from '@mui/material';
 import {
-  Search,
   Notifications,
   Add,
   Person,
   Policy,
   RequestQuote,
   ReportProblem,
-  Close,
-  CheckCircle,
   Warning,
   Info,
 } from '@mui/icons-material';
@@ -38,8 +32,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 
 export default function Header() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchFocused, setSearchFocused] = useState(false);
   const [notificationsAnchor, setNotificationsAnchor] = useState<null | HTMLElement>(null);
   const [addMenuAnchor, setAddMenuAnchor] = useState<null | HTMLElement>(null);
   const router = useRouter();
@@ -51,16 +43,6 @@ export default function Header() {
       const response = await axios.get('/api/notifications');
       return response.data;
     },
-  });
-
-  const { data: searchResults = [] } = useQuery({
-    queryKey: ['search', searchQuery],
-    queryFn: async () => {
-      if (!searchQuery || searchQuery.length < 2) return [];
-      const response = await axios.get(`/api/search?q=${encodeURIComponent(searchQuery)}`);
-      return response.data;
-    },
-    enabled: searchQuery.length >= 2,
   });
 
   const markAsReadMutation = useMutation({
@@ -113,82 +95,6 @@ export default function Header() {
       }}
     >
       <Toolbar sx={{ gap: 2 }}>
-        {/* Search */}
-        <Paper
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            flex: 1,
-            maxWidth: 500,
-            px: 2,
-            py: 0.5,
-            backgroundColor: searchFocused ? '#fff' : '#f5f7fa',
-            border: '1px solid',
-            borderColor: searchFocused ? 'primary.main' : 'transparent',
-            transition: 'all 0.2s',
-          }}
-          elevation={0}
-        >
-          <Search sx={{ color: 'text.secondary', mr: 1 }} />
-          <InputBase
-            placeholder="Search clients, policies, quotes..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => setSearchFocused(true)}
-            onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-            sx={{ flex: 1 }}
-          />
-          {searchQuery && (
-            <IconButton size="small" onClick={() => setSearchQuery('')}>
-              <Close fontSize="small" />
-            </IconButton>
-          )}
-        </Paper>
-
-        {/* Search Results Dropdown */}
-        {searchFocused && searchResults.length > 0 && (
-          <Paper
-            sx={{
-              position: 'absolute',
-              top: 64,
-              left: 16,
-              right: 16,
-              maxWidth: 500,
-              maxHeight: 400,
-              overflow: 'auto',
-              zIndex: 1000,
-            }}
-          >
-            <List>
-              {searchResults.map((result: { id: string; type: string; title: string; subtitle: string; path: string }) => (
-                <ListItem
-                  key={result.id}
-                  component="button"
-                  onClick={() => {
-                    router.push(result.path);
-                    setSearchQuery('');
-                  }}
-                  sx={{
-                    '&:hover': { backgroundColor: 'action.hover' },
-                    cursor: 'pointer',
-                  }}
-                >
-                  <ListItemIcon>
-                    {result.type === 'client' && <Person />}
-                    {result.type === 'policy' && <Policy />}
-                    {result.type === 'quote' && <RequestQuote />}
-                    {result.type === 'claim' && <ReportProblem />}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={result.title}
-                    secondary={result.subtitle}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
-        )}
-
         <Box sx={{ flex: 1 }} />
 
         {/* Quick Add Button */}

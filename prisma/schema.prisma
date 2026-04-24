@@ -95,6 +95,8 @@ model Client {
   referrals       Referral[]   @relation("ReferredClients")
   referredOthers  Referral[]   @relation("ReferringClient")
   crossSellRecommendations CrossSellRecommendation[]
+  customerAuth    CustomerAuth?
+  payments        Payment[]
 
   @@index([agentId])
   @@index([householdId])
@@ -190,6 +192,7 @@ model Document {
   fileSize    Int?
   mimeType    String?
   description String?
+  aiAnalysis    Json?
 
   uploadedAt  DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -256,6 +259,10 @@ model Policy {
   deductibles     Json?
   limits          Json?
 
+  // Renewal
+  autoRenew       Boolean       @default(false)
+  renewedFromId   String?
+
   notes           String?
 
   createdAt       DateTime      @default(now())
@@ -276,6 +283,8 @@ model Policy {
   claims          Claim[]
   commissions     Commission[]
   activities      Activity[]
+  payments        Payment[]
+  paymentSchedules PaymentSchedule[]
 
   @@index([clientId])
   @@index([carrierId])
@@ -370,10 +379,15 @@ model Quote {
   agentId         String
   agent           User        @relation(fields: [agentId], references: [id])
 
+  // Renewal
+  isRenewal       Boolean       @default(false)
+  renewalPolicyId String?
+
   policies        Policy[]
   proposal        Proposal?
   followUps       QuoteFollowUp[]
   activities      Activity[]
+  underwritingResult UnderwritingResult?
 
   @@index([clientId])
   @@index([agentId])
@@ -403,6 +417,8 @@ model Proposal {
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  signatureAudits SignatureAudit[]
 }
 
 model QuoteFollowUp {
@@ -453,6 +469,11 @@ model Claim {
   closedAt        DateTime?
   closedReason    String?
 
+  // AI Fraud Detection
+  aiClassification String?
+  aiRiskScore      Float?
+  aiFlags          Json?
+
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
@@ -472,6 +493,7 @@ model Claim {
   @@index([policyId])
   @@index([clientId])
   @@index([status])
+  @@index([aiRiskScore])
 }
 
 enum ClaimStatus {
@@ -503,20 +525,30 @@ model ClaimCommunication {
 }
 
 model Settlement {
-  id          String    @id @default(cuid())
-  claimId     String
-  claim       Claim     @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  id                  String    @id @default(cuid())
+  claimId             String
+  claim               Claim     @relation(fields: [claimId], references: [id], onDelete: Cascade)
 
-  amount      Decimal
-  type        String
-  description String?
-  paidDate    DateTime?
-  checkNumber String?
+  amount              Decimal
+  type                String
+  description         String?
+  paidDate            DateTime?
+  checkNumber         String?
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  // Payment execution
+  status              String    @default("PENDING") // PENDING, APPROVED, PROCESSING, PAID, FAILED
+  stripeTransferId    String?
+  paymentMethod       String?   // CHECK, ACH, WIRE, STRIPE
+  recipientName       String?
+  recipientAccountId  String?
+  approvedBy          String?
+  approvedAt          DateTime?
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   @@index([claimId])
+  @@index([status])
 }
 
 // ==================== COMMISSION TRACKING ====================
@@ -731,6 +763,7 @@ enum ActivityType {
   CALL_LOGGED
   NOTE_ADDED
   TASK_COMPLETED
+  AI_ANALYSIS_RUN
 }
 
 model Notification {
@@ -818,4 +851,352 @@ model CrossSellRecommendation {
 
   @@index([clientId])
   @@index([status])
+}
+
+// ==================== CUSTOMER PORTAL ====================
+
+model CustomerAuth {
+  id            String    @id @default(cuid())
+  clientId      String    @unique
+  client        Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  email         String    @unique
+  passwordHash  String
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+}
+
+// ==================== PAYMENT PROCESSING ====================
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  status            PaymentStatus @default(PENDING)
+
+  amount            Decimal
+  currency          String        @default("usd")
+  description       String?
+
+  // Stripe fields
+  stripeSessionId   String?       @unique
+  stripePaymentIntentId String?
+  stripeCustomerId  String?
+
+  // Payment link
+  paymentLinkUrl    String?
+  paymentLinkExpiresAt DateTime?
+
+  paidAt            DateTime?
+  failedAt          DateTime?
+  refundedAt        DateTime?
+
+  metadata          Json?
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  // Relations
+  policyId          String?
+  policy            Policy?       @relation(fields: [policyId], references: [id])
+  clientId          String
+  client            Client        @relation(fields: [clientId], references: [id])
+
+  @@index([clientId])
+  @@index([policyId])
+  @@index([status])
+  @@index([stripeSessionId])
+}
+
+// ==================== E-SIGNATURE ====================
+
+model SignatureAudit {
+  id            String    @id @default(cuid())
+  proposalId    String
+  proposal      Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  action        String    // VIEWED, SIGNED, DECLINED
+  signerName    String
+  signerEmail   String
+  ipAddress     String?
+  userAgent     String?
+  signatureData String?   // base64 PNG data
+
+  createdAt     DateTime  @default(now())
+
+  @@index([proposalId])
+}
+
+// ==================== UNDERWRITING ENGINE ====================
+
+model UnderwritingRule {
+  id              String          @id @default(cuid())
+  name            String
+  description     String?
+  lineOfBusiness  LineOfBusiness
+  category        String          // e.g., "age", "claims_history", "credit_score", "property_age"
+
+  // Rule definition
+  field           String          // field to evaluate, e.g., "client.dateOfBirth", "claims.count"
+  operator        String          // GT, LT, GTE, LTE, EQ, NEQ, BETWEEN, IN
+  value           String          // the comparison value (JSON-encoded for complex types)
+  riskPoints      Int             // points added to risk score when rule triggers
+
+  isActive        Boolean         @default(true)
+  priority        Int             @default(0)
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([lineOfBusiness])
+  @@index([isActive])
+}
+
+model UnderwritingResult {
+  id              String    @id @default(cuid())
+  quoteId         String    @unique
+  quote           Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  riskScore       Int
+  maxScore        Int       @default(100)
+  decision        String    // APPROVED, REFERRED, DECLINED
+  factors         Json      // array of { ruleId, ruleName, riskPoints, detail }
+  notes           String?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([decision])
+}
+
+// ==================== COMPLIANCE ENGINE ====================
+
+model ComplianceRule {
+  id              String    @id @default(cuid())
+  name            String
+  description     String?
+  category        String    // LICENSING, DISCLOSURE, DOCUMENTATION, REPORTING, PRIVACY
+  state           String?   // state code (null = all states)
+  lineOfBusiness  LineOfBusiness?
+
+  requirement     String    // what must be done
+  frequency       String?   // ONCE, ANNUAL, QUARTERLY, MONTHLY, ON_EVENT
+  dueDate         DateTime?
+  isActive        Boolean   @default(true)
+  severity        String    @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  checks          ComplianceCheck[]
+
+  @@index([category])
+  @@index([state])
+  @@index([isActive])
+}
+
+model ComplianceCheck {
+  id              String    @id @default(cuid())
+  ruleId          String
+  rule            ComplianceRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  status          String    @default("PENDING") // PENDING, COMPLIANT, NON_COMPLIANT, WAIVED, EXPIRED
+  checkedAt       DateTime?
+  checkedBy       String?
+  notes           String?
+  evidence        String?   // URL or description of evidence
+  nextDueDate     DateTime?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([ruleId])
+  @@index([status])
+  @@index([nextDueDate])
+}
+
+// ==================== JOB SCHEDULER ====================
+
+model JobLog {
+  id          String    @id @default(cuid())
+  jobName     String
+  status      String    @default("QUEUED") // QUEUED, RUNNING, COMPLETED, FAILED
+  payload     Json?
+  result      Json?
+  error       String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([jobName])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ==================== RATING ENGINE ====================
+
+model RateTable {
+  id              String          @id @default(cuid())
+  lineOfBusiness  LineOfBusiness
+  baseRate        Decimal
+  effectiveDate   DateTime
+  expirationDate  DateTime?
+  description     String?
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  factors         RateFactor[]
+
+  @@index([lineOfBusiness])
+  @@index([isActive])
+}
+
+model RateFactor {
+  id          String    @id @default(cuid())
+  rateTableId String
+  rateTable   RateTable @relation(fields: [rateTableId], references: [id], onDelete: Cascade)
+
+  category    String    // AGE, LOCATION, CLAIMS_HISTORY, DEDUCTIBLE, COVERAGE_LIMIT, VEHICLE_AGE, PROPERTY_VALUE, LOYALTY, CREDIT_SCORE
+  condition   Json      // { operator: "GT", value: 25 } or { operator: "IN", value: ["IL", "IN"] }
+  multiplier  Decimal   @default(1.0)
+  flatAmount  Decimal   @default(0)
+  priority    Int       @default(0)
+  description String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([rateTableId])
+  @@index([category])
+}
+
+// ==================== PAYMENT SCHEDULE ====================
+
+model PaymentSchedule {
+  id              String    @id @default(cuid())
+  policyId        String
+  policy          Policy    @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  clientId        String
+
+  amount          Decimal
+  dueDate         DateTime
+  status          String    @default("SCHEDULED") // SCHEDULED, REMINDED, OVERDUE, PAID, FAILED, CANCELLED
+  remindersSent   Int       @default(0)
+  retryCount      Int       @default(0)
+  paymentId       String?   // Link to Payment record when paid
+  gracePeriodEnd  DateTime?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([policyId])
+  @@index([clientId])
+  @@index([dueDate])
+  @@index([status])
+}
+
+// ==================== ESCALATION QUEUE ====================
+
+model Escalation {
+  id          String    @id @default(cuid())
+  type        String    // CLAIM, COMPLAINT, PAYMENT, COMPLIANCE, UNDERWRITING, OTHER
+  priority    String    @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  status      String    @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  title       String
+  description String
+  slaDeadline DateTime
+  assignedTo  String?
+  entityType  String?   // CLAIM, POLICY, CLIENT, COMPLAINT
+  entityId    String?
+  resolution  String?
+  resolvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status])
+  @@index([priority])
+  @@index([assignedTo])
+  @@index([slaDeadline])
+}
+
+// ==================== COMPLAINT MANAGEMENT ====================
+
+model Complaint {
+  id                String          @id @default(cuid())
+  complaintNumber   String          @unique
+  status            String          @default("OPEN") // OPEN, INVESTIGATING, RESOLVED, CLOSED
+  source            String          // PHONE, EMAIL, PORTAL, MAIL, REGULATORY
+  category          String          // SERVICE, BILLING, CLAIMS, COVERAGE, AGENT_CONDUCT, OTHER
+  summary           String
+  description       String
+  clientId          String?
+
+  // AI analysis
+  aiClassification  String?
+  aiSentiment       String?         // POSITIVE, NEUTRAL, NEGATIVE, VERY_NEGATIVE
+
+  // SLA
+  slaDeadline       DateTime
+  resolution        String?
+  resolvedAt        DateTime?
+  resolvedBy        String?
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  notes             ComplaintNote[]
+
+  @@index([status])
+  @@index([clientId])
+  @@index([slaDeadline])
+}
+
+model ComplaintNote {
+  id          String    @id @default(cuid())
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+
+  content     String
+  isInternal  Boolean   @default(false)
+  createdBy   String
+
+  createdAt   DateTime  @default(now())
+
+  @@index([complaintId])
+}
+
+// ==================== CALL LOGGING ====================
+
+model CallLog {
+  id              String    @id @default(cuid())
+  callSid         String    @unique
+  from            String
+  to              String
+  direction       String    // inbound, outbound
+  duration        Int?
+  recordingUrl    String?
+  transcription   String?
+  status          String    @default("initiated") // initiated, ringing, in-progress, completed, failed
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([callSid])
+  @@index([from])
+  @@index([to])
 }

@@ -7,9 +7,9 @@ import axios from 'axios';
 import { useForm, Controller } from 'react-hook-form';
 import {
   Box, Card, CardContent, Typography, Grid, TextField, Button, FormControl, InputLabel,
-  Select, MenuItem, Autocomplete, Alert, Snackbar,
+  Select, MenuItem, Autocomplete, Alert, Snackbar, Collapse, Chip,
 } from '@mui/material';
-import { ArrowBack, Save } from '@mui/icons-material';
+import { ArrowBack, Save, ExpandMore, ExpandLess } from '@mui/icons-material';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { addYears } from 'date-fns';
@@ -31,8 +31,9 @@ export default function NewPolicyPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const { control, handleSubmit, watch, setValue } = useForm({
+  const { control, handleSubmit, setValue } = useForm({
     defaultValues: {
       clientId: searchParams.get('clientId') || '',
       carrierId: '',
@@ -45,13 +46,14 @@ export default function NewPolicyPage() {
     },
   });
 
-  const { data: clients = [] } = useQuery({
+  const { data: clientsData } = useQuery({
     queryKey: ['clients-list'],
     queryFn: async () => {
       const response = await axios.get('/api/clients?limit=100');
-      return response.data.clients;
+      return response.data;
     },
   });
+  const clients = Array.isArray(clientsData?.clients) ? clientsData.clients : Array.isArray(clientsData) ? clientsData : [];
 
   const { data: carriers = [] } = useQuery({
     queryKey: ['carriers'],
@@ -70,12 +72,11 @@ export default function NewPolicyPage() {
       setSnackbar({ open: true, message: 'Policy created successfully', severity: 'success' });
       router.push(`/policies/${data.id}`);
     },
-    onError: () => {
-      setSnackbar({ open: true, message: 'Failed to create policy', severity: 'error' });
+    onError: (error: any) => {
+      const msg = error?.response?.data?.error || 'Failed to create policy';
+      setSnackbar({ open: true, message: msg, severity: 'error' });
     },
   });
-
-  const effectiveDate = watch('effectiveDate');
 
   const onSubmit = (data: any) => {
     createMutation.mutate({
@@ -98,16 +99,16 @@ export default function NewPolicyPage() {
         </Box>
 
         <form onSubmit={handleSubmit(onSubmit)}>
-          <Card>
+          {/* Essential Fields */}
+          <Card sx={{ mb: 2 }}>
             <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" fontWeight={600} gutterBottom>Policy Information</Typography>
-
               <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
                   <Controller
                     name="clientId"
                     control={control}
-                    render={({ field }) => (
+                    rules={{ required: 'Client is required' }}
+                    render={({ field, fieldState }) => (
                       <Autocomplete
                         options={clients}
                         getOptionLabel={(option: any) =>
@@ -117,7 +118,7 @@ export default function NewPolicyPage() {
                         }
                         value={clients.find((c: any) => c.id === field.value) || null}
                         onChange={(_, value) => field.onChange(value?.id || '')}
-                        renderInput={(params) => <TextField {...params} label="Client" required />}
+                        renderInput={(params) => <TextField {...params} label="Client" required error={!!fieldState.error} helperText={fieldState.error?.message} />}
                       />
                     )}
                   />
@@ -127,8 +128,9 @@ export default function NewPolicyPage() {
                   <Controller
                     name="carrierId"
                     control={control}
-                    render={({ field }) => (
-                      <FormControl fullWidth required>
+                    rules={{ required: 'Carrier is required' }}
+                    render={({ field, fieldState }) => (
+                      <FormControl fullWidth required error={!!fieldState.error}>
                         <InputLabel>Carrier</InputLabel>
                         <Select {...field} label="Carrier">
                           {carriers.map((carrier: any) => (
@@ -144,8 +146,9 @@ export default function NewPolicyPage() {
                   <Controller
                     name="lineOfBusiness"
                     control={control}
-                    render={({ field }) => (
-                      <FormControl fullWidth required>
+                    rules={{ required: 'Line of Business is required' }}
+                    render={({ field, fieldState }) => (
+                      <FormControl fullWidth required error={!!fieldState.error}>
                         <InputLabel>Line of Business</InputLabel>
                         <Select {...field} label="Line of Business">
                           {lobOptions.map((lob) => (
@@ -159,62 +162,13 @@ export default function NewPolicyPage() {
 
                 <Grid item xs={12} md={6}>
                   <Controller
-                    name="status"
-                    control={control}
-                    render={({ field }) => (
-                      <FormControl fullWidth>
-                        <InputLabel>Status</InputLabel>
-                        <Select {...field} label="Status">
-                          <MenuItem value="ACTIVE">Active</MenuItem>
-                          <MenuItem value="PENDING">Pending</MenuItem>
-                        </Select>
-                      </FormControl>
-                    )}
-                  />
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <Controller
-                    name="effectiveDate"
-                    control={control}
-                    render={({ field }) => (
-                      <DatePicker
-                        label="Effective Date"
-                        value={field.value}
-                        onChange={(date) => {
-                          field.onChange(date);
-                          if (date) setValue('expirationDate', addYears(date, 1));
-                        }}
-                        slotProps={{ textField: { fullWidth: true, required: true } }}
-                      />
-                    )}
-                  />
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <Controller
-                    name="expirationDate"
-                    control={control}
-                    render={({ field }) => (
-                      <DatePicker
-                        label="Expiration Date"
-                        value={field.value}
-                        onChange={field.onChange}
-                        slotProps={{ textField: { fullWidth: true, required: true } }}
-                      />
-                    )}
-                  />
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <Controller
                     name="premium"
                     control={control}
                     render={({ field }) => (
                       <TextField
                         {...field}
                         fullWidth
-                        label="Premium"
+                        label="Annual Premium"
                         type="number"
                         required
                         placeholder="0.00"
@@ -223,24 +177,98 @@ export default function NewPolicyPage() {
                     )}
                   />
                 </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <Controller
-                    name="billingMethod"
-                    control={control}
-                    render={({ field }) => (
-                      <FormControl fullWidth>
-                        <InputLabel>Billing Method</InputLabel>
-                        <Select {...field} label="Billing Method">
-                          <MenuItem value="AGENCY">Agency Bill</MenuItem>
-                          <MenuItem value="DIRECT">Direct Bill</MenuItem>
-                          <MenuItem value="PREMIUM_FINANCE">Premium Finance</MenuItem>
-                        </Select>
-                      </FormControl>
-                    )}
-                  />
-                </Grid>
               </Grid>
+            </CardContent>
+          </Card>
+
+          {/* Advanced Options (collapsed by default) */}
+          <Card>
+            <CardContent sx={{ p: 0 }}>
+              <Button
+                fullWidth
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                endIcon={showAdvanced ? <ExpandLess /> : <ExpandMore />}
+                sx={{ py: 1.5, px: 3, justifyContent: 'space-between', textTransform: 'none', color: 'text.secondary' }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  Advanced Options
+                  <Chip label="Defaults applied" size="small" color="success" variant="outlined" sx={{ fontSize: '0.7rem', height: 22 }} />
+                </Box>
+              </Button>
+              <Collapse in={showAdvanced}>
+                <Box sx={{ px: 3, pb: 3 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                    Defaults: Active status, today&apos;s effective date, 1-year term, Agency billing
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                      <Controller
+                        name="effectiveDate"
+                        control={control}
+                        render={({ field }) => (
+                          <DatePicker
+                            label="Effective Date"
+                            value={field.value}
+                            onChange={(date) => {
+                              field.onChange(date);
+                              if (date) setValue('expirationDate', addYears(date, 1));
+                            }}
+                            slotProps={{ textField: { fullWidth: true, size: 'small' } }}
+                          />
+                        )}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                      <Controller
+                        name="expirationDate"
+                        control={control}
+                        render={({ field }) => (
+                          <DatePicker
+                            label="Expiration Date"
+                            value={field.value}
+                            onChange={field.onChange}
+                            slotProps={{ textField: { fullWidth: true, size: 'small' } }}
+                          />
+                        )}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                      <Controller
+                        name="status"
+                        control={control}
+                        render={({ field }) => (
+                          <FormControl fullWidth size="small">
+                            <InputLabel>Status</InputLabel>
+                            <Select {...field} label="Status">
+                              <MenuItem value="ACTIVE">Active</MenuItem>
+                              <MenuItem value="PENDING">Pending</MenuItem>
+                            </Select>
+                          </FormControl>
+                        )}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                      <Controller
+                        name="billingMethod"
+                        control={control}
+                        render={({ field }) => (
+                          <FormControl fullWidth size="small">
+                            <InputLabel>Billing Method</InputLabel>
+                            <Select {...field} label="Billing Method">
+                              <MenuItem value="AGENCY">Agency Bill</MenuItem>
+                              <MenuItem value="DIRECT">Direct Bill</MenuItem>
+                              <MenuItem value="PREMIUM_FINANCE">Premium Finance</MenuItem>
+                            </Select>
+                          </FormControl>
+                        )}
+                      />
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Collapse>
             </CardContent>
           </Card>
         </form>

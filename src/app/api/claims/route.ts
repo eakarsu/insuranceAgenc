@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { analyzeClaim } from '@/lib/ai-claims-service';
+import { invalidateCache } from '@/lib/cache';
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,15 +16,21 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status') || '';
 
+    const type = searchParams.get('type') || '';
+
     const where: any = {};
     if (search) {
       where.OR = [
         { claimNumber: { contains: search, mode: 'insensitive' } },
         { client: { firstName: { contains: search, mode: 'insensitive' } } },
         { client: { lastName: { contains: search, mode: 'insensitive' } } },
+        { client: { businessName: { contains: search, mode: 'insensitive' } } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { lossLocation: { contains: search, mode: 'insensitive' } },
       ];
     }
     if (status) where.status = status;
+    if (type) where.type = type;
 
     const [claims, total] = await Promise.all([
       prisma.claim.findMany({
@@ -61,7 +69,7 @@ export async function POST(request: NextRequest) {
       clientId: body.clientId,
       policyId: body.policyId,
       type: body.type,
-      status: 'REPORTED',
+      status: 'REPORTED' as const,
       dateOfLoss: body.dateOfLoss ? new Date(body.dateOfLoss) : new Date(),
       description: body.description || 'No description provided',
       lossLocation: body.lossLocation || null,
@@ -84,6 +92,38 @@ export async function POST(request: NextRequest) {
         claimId: claim.id,
       },
     });
+
+    // Invalidate report caches
+    invalidateCache('report:*').catch(() => {});
+
+    // Fire-and-forget AI analysis to auto-populate AI fields
+    analyzeClaim({
+      type: cleanData.type,
+      description: cleanData.description,
+      estimatedLoss: cleanData.estimatedLoss,
+      dateOfLoss: cleanData.dateOfLoss.toISOString(),
+      lossLocation: cleanData.lossLocation,
+      claimNumber: cleanData.claimNumber,
+      status: 'REPORTED',
+    }).then(async (analysis) => {
+      try {
+        await prisma.claim.update({
+          where: { id: claim.id },
+          data: {
+            aiClassification: analysis.classification,
+            aiRiskScore: analysis.riskScore,
+            aiFlags: {
+              flags: analysis.flags,
+              recommendations: analysis.recommendations,
+              summary: analysis.summary,
+              analyzedAt: new Date().toISOString(),
+            },
+          },
+        });
+      } catch (e) {
+        console.error('Auto AI analysis update failed:', e);
+      }
+    }).catch((e) => console.error('Auto AI analysis failed:', e));
 
     return NextResponse.json(claim, { status: 201 });
   } catch (error) {

@@ -68,7 +68,7 @@ export default function EditClaimPage({ params }: { params: { id: string } }) {
     queryKey: ['clients-list'],
     queryFn: async () => {
       const response = await axios.get('/api/clients?limit=100');
-      return response.data.clients;
+      return response.data.clients || [];
     },
   });
 

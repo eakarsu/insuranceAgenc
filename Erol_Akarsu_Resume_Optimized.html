@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Erol Akarsu - Resume</title>
+<style>
+  @page {
+    size: letter;
+    margin: 0.4in 0.5in;
+  }
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.35;
+    color: #2d2d2d;
+    max-width: 8.5in;
+    margin: 0 auto;
+    padding: 0.4in 0.5in;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 8pt;
+    padding-bottom: 6pt;
+    border-bottom: 2pt solid #1a5276;
+  }
+  .header h1 {
+    font-size: 22pt;
+    color: #1a5276;
+    margin-bottom: 4pt;
+    letter-spacing: 1pt;
+  }
+  .header .subtitle {
+    font-size: 11pt;
+    color: #2c3e50;
+    margin-bottom: 6pt;
+    font-weight: 600;
+  }
+  .header .contact {
+    font-size: 10pt;
+    color: #555;
+  }
+  .header .contact span {
+    margin: 0 8pt;
+  }
+
+  /* Section Headers */
+  .section-title {
+    font-size: 11.5pt;
+    font-weight: 700;
+    color: #1a5276;
+    text-transform: uppercase;
+    letter-spacing: 0.5pt;
+    border-bottom: 1pt solid #1a5276;
+    padding-bottom: 2pt;
+    margin-top: 8pt;
+    margin-bottom: 4pt;
+  }
+
+  /* Summary */
+  .summary {
+    font-size: 10pt;
+    line-height: 1.45;
+    color: #333;
+    margin-bottom: 2pt;
+  }
+
+  /* Skills */
+  .skills-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2pt 16pt;
+    font-size: 10pt;
+    margin-bottom: 2pt;
+  }
+  .skill-row {
+    display: flex;
+    line-height: 1.5;
+  }
+  .skill-label {
+    font-weight: 700;
+    color: #1a5276;
+    min-width: 110pt;
+    font-size: 9.5pt;
+  }
+  .skill-value {
+    color: #333;
+    font-size: 9.5pt;
+  }
+
+  /* Experience */
+  .job {
+    margin-bottom: 7pt;
+  }
+  .job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .job-title {
+    font-weight: 700;
+    font-size: 10.5pt;
+    color: #1a5276;
+  }
+  .job-date {
+    font-size: 9.5pt;
+    color: #555;
+    white-space: nowrap;
+  }
+  .job-company {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10pt;
+    color: #444;
+    margin-bottom: 3pt;
+  }
+  .company-name {
+    font-weight: 600;
+    font-style: italic;
+  }
+  .job ul {
+    margin-left: 14pt;
+    font-size: 10pt;
+    line-height: 1.45;
+  }
+  .job li {
+    margin-bottom: 1.5pt;
+    color: #333;
+  }
+  .job li strong {
+    color: #1a5276;
+  }
+
+  /* Earlier Experience */
+  .earlier {
+    font-size: 10pt;
+    color: #444;
+    margin-top: 4pt;
+    margin-bottom: 2pt;
+  }
+  .earlier strong {
+    color: #2d2d2d;
+  }
+
+  /* Education */
+  .edu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3pt 16pt;
+    font-size: 10pt;
+    margin-bottom: 2pt;
+  }
+  .edu-item {
+    line-height: 1.4;
+  }
+  .edu-degree {
+    font-weight: 700;
+    color: #2d2d2d;
+  }
+  .edu-school {
+    color: #1a5276;
+    font-style: italic;
+  }
+
+  /* Certifications */
+  .certs {
+    font-size: 9.5pt;
+    color: #444;
+    line-height: 1.5;
+  }
+
+  /* Projects */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6pt 14pt;
+    font-size: 9.5pt;
+    margin-bottom: 2pt;
+  }
+  .project {
+    padding: 4pt 6pt;
+    border: 0.5pt solid #ccc;
+    border-left: 2.5pt solid #1a5276;
+    border-radius: 2pt;
+  }
+  .project-name {
+    font-weight: 700;
+    color: #1a5276;
+    font-size: 9.5pt;
+  }
+  .project-category {
+    font-size: 8pt;
+    color: #777;
+    text-transform: uppercase;
+    letter-spacing: 0.3pt;
+  }
+  .project-desc {
+    color: #444;
+    font-size: 9pt;
+    line-height: 1.35;
+    margin-top: 1pt;
+  }
+  .project-tech {
+    font-size: 8pt;
+    color: #1a5276;
+    margin-top: 2pt;
+    font-weight: 600;
+  }
+  .projects-note {
+    font-size: 9pt;
+    color: #666;
+    font-style: italic;
+    margin-top: 4pt;
+  }
+
+  /* Page break hint */
+  .page-break-before {
+    page-break-before: always;
+  }
+
+  /* Print styles */
+  @media print {
+    body {
+      padding: 0;
+      font-size: 10.5pt;
+    }
+    .header {
+      margin-bottom: 10pt;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>EROL AKARSU</h1>
+  <div class="subtitle">Lead Machine Learning Architect | Principal Software Engineer</div>
+  <div class="contact">
+    eakarsu@gmail.com<span>|</span>Richmond, VA<span>|</span>linkedin.com/in/erol-akarsu<span>|</span>github.com/eakarsu
+  </div>
+</div>
+
+<div class="section-title">Professional Summary</div>
+<p class="summary">
+  Machine Learning Architect and Principal Engineer leading enterprise-scale AI/ML initiatives at Lowe's Companies. Built transformer-based image curation systems and GenAI assistants serving millions of users. Proven track record: <strong>9x performance improvement</strong> on product indexing (5M products), architecting cloud search infrastructure on GCP, and leading cross-functional teams between senior VPs and engineering. Deep expertise in LLMs, Generative AI, distributed systems, and big data pipelines.
+</p>
+
+<div class="section-title">Technical Skills</div>
+<div class="skills-grid">
+  <div class="skill-row">
+    <span class="skill-label">AI / ML:</span>
+    <span class="skill-value">LLMs, Transformers, GenAI, RAG, PyTorch, TensorFlow, NLP, Computer Vision</span>
+  </div>
+  <div class="skill-row">
+    <span class="skill-label">Cloud & DevOps:</span>
+    <span class="skill-value">GCP, AWS, Kubernetes, Docker, Terraform, Ansible, Jenkins, CI/CD</span>
+  </div>
+  <div class="skill-row">
+    <span class="skill-label">Big Data & Search:</span>
+    <span class="skill-value">Apache Spark, Beam, Elasticsearch, Solr, Kafka, Hadoop</span>
+  </div>
+  <div class="skill-row">
+    <span class="skill-label">Languages:</span>
+    <span class="skill-value">Python, Java, Scala, TypeScript, JavaScript, SQL</span>
+  </div>
+  <div class="skill-row">
+    <span class="skill-label">Frameworks:</span>
+    <span class="skill-value">React, Node.js, Next.js, Spring Boot, FastAPI</span>
+  </div>
+  <div class="skill-row">
+    <span class="skill-label">Databases:</span>
+    <span class="skill-value">PostgreSQL, MongoDB, Couchbase, Redis, Oracle</span>
+  </div>
+</div>
+
+<div class="section-title">Professional Experience</div>
+
+<div class="job">
+  <div class="job-header">
+    <span class="job-title">Lead Machine Learning Architect</span>
+    <span class="job-date">Jan 2024 - Present</span>
+  </div>
+  <div class="job-company">
+    <span class="company-name">Lowe's Companies, Inc.</span>
+    <span>Charlotte, NC</span>
+  </div>
+  <ul>
+    <li>Lead development of ML transformer models for optimal image selection from a database of millions of product images, improving visual engagement across Lowe's.com</li>
+    <li>Architected Generative AI-powered Project Quota Assistance system enabling real-time Q&A for home improvement customers</li>
+    <li>Designed and deployed LLM solutions processing thousands of daily user queries with high accuracy</li>
+    <li>Collaborate with product, design, and engineering leadership to define AI/ML roadmap and strategy</li>
+  </ul>
+</div>
+
+<div class="job">
+  <div class="job-header">
+    <span class="job-title">Principal Software Engineer</span>
+    <span class="job-date">Oct 2020 - Jan 2024</span>
+  </div>
+  <div class="job-company">
+    <span class="company-name">Lowe's Companies, Inc.</span>
+    <span>Mooresville, NC</span>
+  </div>
+  <ul>
+    <li>Engineered pivotal Lowe's.com features (free delivery, expedited delivery, promotions) through end-to-end software lifecycle, impacting millions of daily users</li>
+    <li>Built Apache Beam data pipelines and Elasticsearch frameworks powering product search and discovery</li>
+    <li>Served as single-threaded leader between senior VPs and engineering teams on Spark application development</li>
+    <li>Reduced client costs while elevating feature quality by deploying automated build processes</li>
+    <li>Led project roadmap, implementation, and launch planning while maintaining regulatory compliance</li>
+  </ul>
+</div>
+
+<div class="job">
+  <div class="job-header">
+    <span class="job-title">Senior Software Architect</span>
+    <span class="job-date">May 2018 - Oct 2020</span>
+  </div>
+  <div class="job-company">
+    <span class="company-name">Wipro Limited</span> (Lowe's Enterprise Search)
+    <span>Richmond, VA</span>
+  </div>
+  <ul>
+    <li>Reduced product indexing time by <strong>9x</strong> (360 to 40 minutes for 5M products) by building ETL processes in Scala with Spark, Couchbase, and Solr</li>
+    <li>Built enterprise search infrastructure on Google Cloud using Terraform, Packer, Ansible, and Jenkins</li>
+    <li>Established cloud-based load balancers, firewalls, and Kubernetes clusters for production search services</li>
+    <li>Industrialized Spark Scala's 20+ step indexing pipeline for continuous product data processing</li>
+  </ul>
+</div>
+
+<div class="job">
+  <div class="job-header">
+    <span class="job-title">Master Software Engineer</span>
+    <span class="job-date">Aug 2016 - Dec 2017</span>
+  </div>
+  <div class="job-company">
+    <span class="company-name">Capital One</span>
+    <span>Richmond, VA</span>
+  </div>
+  <ul>
+    <li>Led overhaul of developer.capitalone.com and regression suite using Spring, Node.js, and AngularJS</li>
+    <li>Automated API testing via MVC, Swagger, and Graph Computing, eliminating manual testing overhead</li>
+    <li>Designed data flows and sandbox environments for API development and service virtualization</li>
+  </ul>
+</div>
+
+<div class="job">
+  <div class="job-header">
+    <span class="job-title">Independent Software Consultant</span>
+    <span class="job-date">2003 - 2016</span>
+  </div>
+  <div class="job-company">
+    <span class="company-name">US Government & Enterprise Clients</span>
+  </div>
+  <ul>
+    <li>Built end-to-end search engine for a food retail chain using Nutch/Solr/Hadoop with 15 ranking criteria</li>
+    <li>Achieved <strong>99.5% extraction rate</strong> on 700K lines of COBOL code using XQUERY functional language</li>
+    <li>Developed government web applications with Angular, Node.js, and full SDLC ownership</li>
+  </ul>
+</div>
+
+<div class="earlier">
+  <strong>Earlier:</strong> Software Engineer at <strong>Cisco Systems</strong> — Unified communications software development
+</div>
+
+<div class="section-title">Selected AI / Full-Stack Projects</div>
+<div class="projects-grid">
+  <div class="project">
+    <div class="project-name">AI Churn Prediction System</div>
+    <div class="project-category">Customer Analytics</div>
+    <div class="project-desc">SaaS platform predicting customer churn with AI risk scores, segmentation, and intervention recommendations</div>
+    <div class="project-tech">React, Node.js, PostgreSQL, Claude AI</div>
+  </div>
+  <div class="project">
+    <div class="project-name">AI Insurance Agency Platform</div>
+    <div class="project-category">InsurTech</div>
+    <div class="project-desc">Full agency management with AI claims assistant, coverage analyzer, risk assessor, and voice receptionist</div>
+    <div class="project-tech">Next.js, TypeScript, Prisma, PostgreSQL</div>
+  </div>
+  <div class="project">
+    <div class="project-name">AI Due Diligence Platform</div>
+    <div class="project-category">M&A / Investment</div>
+    <div class="project-desc">M&A analysis with document parsing, risk assessment, and automated reporting for investment decisions</div>
+    <div class="project-tech">React, Node.js, OpenRouter, NLP</div>
+  </div>
+  <div class="project">
+    <div class="project-name">AI Contract Analysis</div>
+    <div class="project-category">Legal Tech</div>
+    <div class="project-desc">Clause extraction, risk identification, negotiation suggestions, and term comparison across documents</div>
+    <div class="project-tech">React, Node.js, NLP, Claude AI</div>
+  </div>
+  <div class="project">
+    <div class="project-name">AI Inventory Forecasting</div>
+    <div class="project-category">Supply Chain</div>
+    <div class="project-desc">Demand forecasting with supplier scoring, restock recommendations, and anomaly detection</div>
+    <div class="project-tech">React, Express, Claude AI, PostgreSQL</div>
+  </div>
+  <div class="project">
+    <div class="project-name">AI Voice Agent</div>
+    <div class="project-category">Conversational AI</div>
+    <div class="project-desc">Voice-enabled AI assistant with speech recognition, natural language understanding, and response generation</div>
+    <div class="project-tech">React, Node.js, Web Speech API</div>
+  </div>
+  <div class="project">
+    <div class="project-name">AI Regulatory Compliance</div>
+    <div class="project-category">Compliance</div>
+    <div class="project-desc">Regulation tracking, audit preparation, risk assessment, and automated compliance reporting</div>
+    <div class="project-tech">React, Node.js, Claude AI</div>
+  </div>
+  <div class="project">
+    <div class="project-name">AI Recruiter Screener</div>
+    <div class="project-category">HR Tech</div>
+    <div class="project-desc">Resume parsing, skill matching, interview question generation, and bias-free evaluation scoring</div>
+    <div class="project-tech">React, Node.js, NLP</div>
+  </div>
+</div>
+<p class="projects-note">Full portfolio of 50+ production-ready AI applications available upon request</p>
+
+<div class="section-title">Education & Certifications</div>
+<div style="font-size: 9.5pt; line-height: 1.5; color: #333;">
+  <strong>Ph.D., Computer Science</strong> — Syracuse University &nbsp;|&nbsp;
+  <strong>M.S., Computer Science</strong> — Syracuse University &nbsp;|&nbsp;
+  <strong>M.S., Computer Engineering</strong> — Istanbul Technical University &nbsp;|&nbsp;
+  <strong>B.S., Computer Engineering</strong> — Ege University
+  <br>
+  <span style="color: #555;">Certifications: Deep Learning Specialization (Andrew Ng) &bull; Neural Networks & Deep Learning &bull; Advanced ML Algorithms</span>
+</div>
+
+</body>
+</html>
