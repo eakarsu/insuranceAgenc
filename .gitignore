@@ -68,3 +68,9 @@ tmp/
 coverage/
 .nyc_output/
 htmlcov/
+
+# Build / debug artifacts (audit noted these were committed)
+tsconfig.tsbuildinfo
+dev-server.log
+*.pdf
+test-results/

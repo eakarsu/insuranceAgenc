@@ -1,18 +1,28 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'anthropic/claude-3-haiku';
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import {
+  aiRateLimiter,
+  callOpenRouter,
+  AiUnavailableError,
+  logAiResult,
+} from "@/lib/ai-helpers";
 
 export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userKey = (session.user as any)?.id || (session.user as any)?.email || "anon";
 
-    const { messages, context } = await request.json();
+  const limit = aiRateLimiter(userKey);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "AI rate limit exceeded", resetAt: new Date(limit.resetAt).toISOString() },
+      { status: 429 },
+    );
+  }
 
-    const systemMessage = `You are a senior insurance industry consultant with 25+ years of experience across personal lines, commercial lines, surplus lines, and reinsurance. You serve as a trusted advisor to insurance agents, CSRs, and agency principals.
+  const { messages, context } = await request.json();
+  const systemMessage = `You are a senior insurance industry consultant with 25+ years of experience across personal lines, commercial lines, surplus lines, and reinsurance. You serve as a trusted advisor to insurance agents, CSRs, and agency principals.
 
 Your expertise includes:
 - All personal lines (auto, homeowners, renters, umbrella, flood, earthquake, personal articles)
@@ -25,7 +35,7 @@ Your expertise includes:
 - Coverage forms (ISO, AAIS, proprietary) and their key exclusions
 - Rating, underwriting, and actuarial concepts
 
-${context ? `Current context: ${JSON.stringify(context)}` : ''}
+${context ? `Current context: ${JSON.stringify(context)}` : ""}
 
 Guidelines:
 - Reference specific policy forms (e.g., HO-3, CP 00 10, CG 00 01), endorsements, and exclusion numbers when relevant
@@ -38,35 +48,41 @@ Guidelines:
 - When unsure about jurisdiction-specific rules, say so and recommend verifying with the state DOI
 - Always consider both the client's protection needs and the agency's E&O exposure`;
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': process.env.NEXTAUTH_URL || 'http://localhost:3000',
-      },
-      body: JSON.stringify({
-        model: OPENROUTER_MODEL,
-        messages: [
-          { role: 'system', content: systemMessage },
-          ...messages,
-        ],
-        temperature: 0.6,
-        max_tokens: 5000,
-      }),
+  const userPrompt = (messages || [])
+    .map((m: any) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
+    .join("\n\n");
+
+  const t0 = Date.now();
+  let raw = "";
+  try {
+    raw = await callOpenRouter(systemMessage, userPrompt, {
+      temperature: 0.6,
+      maxTokens: 5000,
     });
-
-    const data = await response.json();
-
-    if (data.error) {
-      throw new Error(data.error.message);
+    await logAiResult({
+      feature: "chat",
+      userId: userKey,
+      input: { messageCount: messages?.length, hasContext: !!context },
+      output: { length: raw.length },
+      durationMs: Date.now() - t0,
+    });
+    return NextResponse.json({ message: raw });
+  } catch (err: any) {
+    await logAiResult({
+      feature: "chat",
+      userId: userKey,
+      input: { messageCount: messages?.length },
+      error: err?.message || String(err),
+      durationMs: Date.now() - t0,
+    });
+    if (err instanceof AiUnavailableError) {
+      return NextResponse.json(
+        { error: "AI is not configured on this server" },
+        { status: 503 },
+      );
     }
-
-    const content = data.choices?.[0]?.message?.content;
-
-    return NextResponse.json({ message: content });
-  } catch (error: any) {
-    console.error('Chat API error:', error);
-    return NextResponse.json({ error: error.message || 'Chat failed' }, { status: 500 });
+    // Do NOT leak provider error message to the client.
+    console.error("Chat API error:", err);
+    return NextResponse.json({ error: "AI request failed" }, { status: 500 });
   }
 }

@@ -212,6 +212,7 @@ const navItems: NavItem[] = [
       { label: 'Loss Run Analyzer', path: '/ai/loss-run-analyzer', icon: <TrendingUp /> },
       { label: 'Endorsement Recommender', path: '/ai/endorsement-recommender', icon: <Extension /> },
       { label: 'Compliance Checker', path: '/ai/compliance-checker', icon: <GavelRounded /> },
+      { label: 'AI Suite (NEW)', path: '/ai/ai-suite', icon: <AutoAwesome /> },
     ],
   },
   {

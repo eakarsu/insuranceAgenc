@@ -489,6 +489,7 @@ model Claim {
   communications  ClaimCommunication[]
   settlements     Settlement[]
   activities      Activity[]
+  fraudAssessments ClaimFraudAssessment[]
 
   @@index([policyId])
   @@index([clientId])
@@ -1180,6 +1181,38 @@ model ComplaintNote {
   @@index([complaintId])
 }
 
+// ==================== CLAIMS FRAUD ASSESSMENT ====================
+
+model ClaimFraudAssessment {
+  id              String    @id @default(cuid())
+  claimId         String
+  claim           Claim     @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  // Scores
+  fraudRiskScore  Int       // 0-100 (100 = highest fraud risk)
+  fraudRiskLevel  String    // LOW, MODERATE, ELEVATED, HIGH, CRITICAL
+
+  // Risk factors array: [{ factor: string, severity: string, description: string }]
+  riskFactors     Json
+
+  // AI output
+  explanation     String
+  recommendedAction String  // APPROVE_NORMAL, ENHANCED_REVIEW, SIU_REFERRAL, CLAIM_HOLD
+
+  // Meta
+  modelUsed       String?
+  triggeredEscalation Boolean @default(false)
+  escalationId    String?
+  assessedBy      String    // user id
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([claimId])
+  @@index([fraudRiskScore])
+  @@index([recommendedAction])
+  @@index([createdAt])
+}
+
 // ==================== CALL LOGGING ====================
 
 model CallLog {
@@ -1199,4 +1232,121 @@ model CallLog {
   @@index([callSid])
   @@index([from])
   @@index([to])
+}
+
+// ==================== AI RESULTS (JSONB audit log) ====================
+
+// Generic per-feature AI run log: stores prompts, parsed results, tokens, errors.
+// Used for audit, replay, and cost telemetry across every AI feature.
+model AiResult {
+  id            String   @id @default(cuid())
+  feature       String   // e.g. "underwriting_narrator", "loss_run_analyzer"
+  refType       String?  // optional FK target type
+  refId         String?  // optional FK target id
+  userId        String?  // who initiated the run
+  model         String   // model name
+  input         Json?    // sanitized prompt inputs
+  output        Json?    // parsed AI response (ai_results JSONB)
+  rawText       String?
+  error         String?
+  durationMs    Int?
+  tokensIn      Int?
+  tokensOut     Int?
+
+  createdAt     DateTime @default(now())
+
+  @@index([feature, createdAt])
+  @@index([refType, refId])
+  @@index([userId])
+}
+
+// AI-generated narrative justifying an underwriting decision (E&O audit trail).
+model UnderwritingNarrative {
+  id            String   @id @default(cuid())
+  refType       String   // "Policy" | "Quote"
+  refId         String
+  decision      String   // "BIND" | "DECLINE" | "REFER"
+  narrative     String   // AI prose
+  rationaleBullets Json  // list of factors
+  eoExposure    String   // low | medium | high
+  createdById   String?
+
+  createdAt     DateTime @default(now())
+
+  @@index([refType, refId])
+}
+
+// Loss-run PDF ingestion: store extracted claims + AI summary, link to a Quote.
+model LossRunIngestion {
+  id            String   @id @default(cuid())
+  quoteId       String?
+  fileName      String
+  fileBytes     Int
+  extractedClaims Json   // array of {date, type, paid, reserved, status, ...}
+  summary       String?
+  patterns      Json?
+  premiumImpactPct Float?
+  status        String   @default("processed") // processed | error
+  errorText     String?
+
+  createdAt     DateTime @default(now())
+
+  @@index([quoteId])
+}
+
+// Per-policy renewal-risk score with retention strategies.
+model RenewalRiskScore {
+  id            String   @id @default(cuid())
+  policyId      String
+  daysToRenewal Int
+  retentionScore Float   // 0..1 (1 = very likely to renew)
+  riskFactors   Json
+  strategies    Json
+  outreachDrafted Boolean @default(false)
+  outreachContent String?
+
+  createdAt     DateTime @default(now())
+
+  @@index([policyId, createdAt])
+}
+
+// Compliance check result attached to a policy/endorsement save attempt.
+model ComplianceCheckResult {
+  id            String   @id @default(cuid())
+  refType       String   // "Policy" | "Endorsement"
+  refId         String
+  blocking      Boolean  @default(false)
+  complianceScore Float?
+  violations    Json
+  warnings      Json
+  recommendations Json
+  raw           Json?
+
+  createdAt     DateTime @default(now())
+
+  @@index([refType, refId, createdAt])
+}
+
+// FNOL draft created from a voice intake call before being promoted to a Claim.
+model FNOLDraft {
+  id            String   @id @default(cuid())
+  callSid       String?
+  callerPhone   String?
+  policyNumber  String?
+  lossDate      DateTime?
+  lossType      String?
+  description   String?
+  injuriesReported Boolean @default(false)
+  policeReportNumber String?
+  estimatedDamage Float?
+  missingFields Json?
+  confirmationNumber String @unique
+  promotedClaimId String?
+  status        String   @default("draft") // draft | confirmed | promoted | discarded
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([callSid])
+  @@index([callerPhone])
 }
