@@ -74,3 +74,12 @@ tsconfig.tsbuildinfo
 dev-server.log
 *.pdf
 test-results/
+
+# --- secrets (auto-added) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+**/credentials*.json
+**/serviceAccount*.json
