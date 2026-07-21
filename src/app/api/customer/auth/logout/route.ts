@@ -3,7 +3,7 @@ import { clearCustomerCookie } from '@/lib/customer-auth';
 
 export async function POST(request: NextRequest) {
   try {
-    clearCustomerCookie();
+    await clearCustomerCookie();
 
     return NextResponse.json({ success: true });
   } catch (error) {

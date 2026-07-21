@@ -16,22 +16,6 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Email and password required');
         }
 
-        // Auto-login mode: find the single ADMIN owner
-        if (credentials.email === 'auto' && credentials.password === 'auto') {
-          const owner = await prisma.user.findFirst({
-            where: { role: 'ADMIN', isActive: true },
-          });
-          if (!owner) {
-            throw new Error('No owner account found');
-          }
-          return {
-            id: owner.id,
-            email: owner.email,
-            name: owner.name,
-            role: owner.role,
-          };
-        }
-
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
@@ -65,8 +49,18 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
+        const activeUser = await prisma.user.findFirst({
+          where: { id: token.id as string, isActive: true },
+          select: { id: true, email: true, name: true, role: true },
+        });
+        if (!activeUser) {
+          delete (session as { user?: unknown }).user;
+          return session;
+        }
+        session.user.id = activeUser.id;
+        session.user.email = activeUser.email;
+        session.user.name = activeUser.name;
+        session.user.role = activeUser.role;
       }
       return session;
     },

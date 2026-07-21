@@ -3,62 +3,17 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export async function clearTestData() {
-  // Clear in correct order due to foreign key constraints
-  // Use raw SQL to handle complex relations
-  try {
-    await prisma.$executeRaw`DELETE FROM "Commission"`;
-  } catch (e) {}
-  try {
-    await prisma.$executeRaw`DELETE FROM "Activity"`;
-  } catch (e) {}
-  try {
-    await prisma.$executeRaw`DELETE FROM "CrossSellRecommendation"`;
-  } catch (e) {}
-  try {
-    await prisma.$executeRaw`DELETE FROM "CampaignRecipient"`;
-  } catch (e) {}
-  try {
-    await prisma.$executeRaw`DELETE FROM "Campaign"`;
-  } catch (e) {}
-  try {
-    await prisma.$executeRaw`DELETE FROM "EmailTemplate"`;
-  } catch (e) {}
-  try {
-    await prisma.$executeRaw`DELETE FROM "Referral"`;
-  } catch (e) {}
-  try {
-    await prisma.$executeRaw`DELETE FROM "Claim"`;
-  } catch (e) {}
-  try {
-    await prisma.$executeRaw`DELETE FROM "Quote"`;
-  } catch (e) {}
-  try {
-    await prisma.$executeRaw`DELETE FROM "Policy"`;
-  } catch (e) {}
-  try {
-    await prisma.$executeRaw`DELETE FROM "Document"`;
-  } catch (e) {}
-  try {
-    await prisma.$executeRaw`DELETE FROM "LifeEvent"`;
-  } catch (e) {}
-  try {
-    await prisma.$executeRaw`DELETE FROM "Contact"`;
-  } catch (e) {}
-  try {
-    await prisma.$executeRaw`DELETE FROM "Client"`;
-  } catch (e) {}
-  try {
-    await prisma.$executeRaw`DELETE FROM "Carrier"`;
-  } catch (e) {}
-  try {
-    await prisma.$executeRaw`DELETE FROM "Notification"`;
-  } catch (e) {}
-  try {
-    await prisma.$executeRaw`DELETE FROM "User"`;
-  } catch (e) {}
-  try {
-    await prisma.$executeRaw`DELETE FROM "Household"`;
-  } catch (e) {}
+  const databaseUrl = process.env.DATABASE_URL || '';
+  if (process.env.NODE_ENV !== 'test' || !/(?:_test|_validation)/.test(databaseUrl)) {
+    throw new Error('Refusing to clear data outside an explicitly named test/validation database');
+  }
+  const tables = await prisma.$queryRaw<Array<{ tablename: string }>>`
+    SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename <> '_prisma_migrations'
+  `;
+  if (tables.length) {
+    const names = tables.map(({ tablename }) => `"${tablename.replace(/"/g, '""')}"`).join(',');
+    await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${names} RESTART IDENTITY CASCADE`);
+  }
 }
 
 export async function createTestUser() {

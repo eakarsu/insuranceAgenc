@@ -1,10 +1,8 @@
 import { NextRequest } from 'next/server';
-import { jwtVerify } from 'jose';
 import { addConnection, removeConnection } from '@/lib/sse-manager';
+import { verifyCustomerToken } from '@/lib/customer-auth';
 
 export const dynamic = 'force-dynamic';
-
-const JWT_SECRET = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || 'fallback-secret');
 
 export async function GET(request: NextRequest) {
   // Authenticate via JWT token in query params
@@ -15,9 +13,9 @@ export async function GET(request: NextRequest) {
 
   let clientId: string;
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-    clientId = payload.clientId as string;
-    if (!clientId) throw new Error('Missing clientId');
+    const customer = await verifyCustomerToken(token);
+    if (!customer) throw new Error('Invalid customer token');
+    clientId = customer.clientId;
   } catch {
     return new Response('Invalid token', { status: 401 });
   }

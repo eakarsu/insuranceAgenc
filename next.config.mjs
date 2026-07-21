@@ -1,11 +1,12 @@
 /** @type {import('next').NextConfig} */
-const allowedOrigin = process.env.CORS_ORIGIN || '*';
+const allowedOrigin = process.env.CORS_ALLOWED_ORIGIN || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3000');
+if (!allowedOrigin) throw new Error('CORS_ALLOWED_ORIGIN is required in production');
 
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ["@prisma/client", "bcryptjs", "nodemailer", "puppeteer-core", "@sparticuz/chromium", "node-cron"],
-    instrumentationHook: true,
-  },
+  output: 'standalone',
+  outputFileTracingRoot: process.cwd(),
+  transpilePackages: ['jose'],
+  serverExternalPackages: ["@prisma/client", "bcryptjs", "puppeteer-core", "@sparticuz/chromium", "node-cron"],
   poweredByHeader: false,
   compress: true,
   reactStrictMode: true,
@@ -18,7 +19,7 @@ const nextConfig = {
           { key: 'Access-Control-Allow-Credentials', value: 'true' },
           { key: 'Access-Control-Allow-Origin', value: allowedOrigin },
           { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,PATCH,DELETE,OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type,Authorization,X-Requested-With' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type,Authorization,X-Requested-With,Idempotency-Key' },
         ],
       },
     ];
@@ -37,7 +38,7 @@ const nextConfig = {
   webpack: (config, { isServer }) => {
     if (isServer) {
       config.externals = config.externals || [];
-      config.externals.push('node-cron', 'puppeteer-core', '@sparticuz/chromium', 'nodemailer', 'twilio');
+      config.externals.push('node-cron', 'puppeteer-core', '@sparticuz/chromium', 'twilio');
     }
     return config;
   },

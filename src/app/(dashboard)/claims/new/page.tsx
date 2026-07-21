@@ -9,7 +9,7 @@ import {
   Box, Card, CardContent, Typography, Grid, TextField, Button, FormControl, InputLabel,
   Select, MenuItem, Autocomplete, Alert, Snackbar,
 } from '@mui/material';
-import { ArrowBack, Save, SupportAgent } from '@mui/icons-material';
+import { ArrowBack, Save } from '@mui/icons-material';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
@@ -29,6 +29,7 @@ export default function NewClaimPage() {
       clientId: searchParams.get('clientId') || '',
       policyId: '',
       type: '',
+      jurisdiction: '',
       dateOfLoss: new Date(),
       description: '',
       lossLocation: '',
@@ -58,10 +59,14 @@ export default function NewClaimPage() {
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
+      const externalEventId = `agency-console-${crypto.randomUUID()}`;
       const response = await axios.post('/api/claims', {
         ...data,
+        externalEventId,
+        sourceSystem: 'agency-console',
+        sourceRecordId: externalEventId,
         estimatedLoss: data.estimatedLoss ? parseFloat(data.estimatedLoss) : null,
-      });
+      }, { headers: { 'Idempotency-Key': externalEventId } });
       return response.data;
     },
     onSuccess: (data) => {
@@ -84,9 +89,6 @@ export default function NewClaimPage() {
           <Button startIcon={<ArrowBack />} onClick={() => router.back()}>Back</Button>
           <Typography variant="h4" fontWeight={700}>Report New Claim</Typography>
           <Box sx={{ flex: 1 }} />
-          <Button variant="outlined" startIcon={<SupportAgent />} onClick={() => router.push('/ai/claims-assistant')}>
-            AI Claims Assistant
-          </Button>
         </Box>
 
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -165,6 +167,16 @@ export default function NewClaimPage() {
                         onChange={field.onChange}
                         slotProps={{ textField: { fullWidth: true, required: true } }}
                       />
+                    )}
+                  />
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <Controller
+                    name="jurisdiction"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField {...field} fullWidth required label="Loss jurisdiction" inputProps={{ maxLength: 2 }} helperText="Two-letter state code used for adjuster licensing and claim rules" />
                     )}
                   />
                 </Grid>

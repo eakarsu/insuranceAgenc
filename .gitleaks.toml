@@ -1,0 +1,9 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Generated dependencies, build/test output, and the blank-secret environment contract"
+paths = [
+  '''(^|/)(\.next|node_modules|playwright-report|test-results)/''',
+  '''^\.env\.example$''',
+]

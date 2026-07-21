@@ -38,7 +38,7 @@ export default function ProducerSplitsPage() {
   const { data: commissionsData } = useQuery({
     queryKey: ['commissions-for-split'],
     queryFn: async () => {
-      const response = await axios.get('/api/commissions');
+      const response = await axios.get('/api/commissions?limit=1000');
       return response.data;
     },
   });
@@ -68,12 +68,16 @@ export default function ProducerSplitsPage() {
     },
   });
 
-  const agentData = agents?.map((agent: any, index: number) => ({
-    ...agent,
-    totalCommission: Math.floor(Math.random() * 50000) + 10000,
-    policies: Math.floor(Math.random() * 50) + 10,
-    splitPercentage: 100,
-  })) || [];
+  const commissions = commissionsData?.commissions || [];
+  const agentData = agents?.map((agent: any) => {
+    const owned = commissions.filter((commission: any) => commission.agent?.id === agent.id);
+    return {
+      ...agent,
+      totalCommission: owned.reduce((sum: number, commission: any) => sum + Number(commission.amount), 0),
+      policies: new Set(owned.map((commission: any) => commission.policy?.id).filter(Boolean)).size,
+      splitPercentage: 100,
+    };
+  }) || [];
 
   const filteredAgentData = agentData.filter((agent: any) => {
     if (!search.trim()) return true;

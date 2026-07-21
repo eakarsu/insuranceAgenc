@@ -10,16 +10,19 @@ datasource db {
 // ==================== USER & AUTH ====================
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  password      String
-  name          String
-  role          UserRole  @default(AGENT)
-  phone         String?
-  avatar        String?
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                       String    @id @default(cuid())
+  email                    String    @unique
+  password                 String
+  name                     String
+  role                     UserRole  @default(AGENT)
+  phone                    String?
+  avatar                   String?
+  isActive                 Boolean   @default(true)
+  adjusterLicenseNumber    String?
+  adjusterLicenseStates    String[]  @default([])
+  adjusterLicenseExpiresAt DateTime?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 
   // Relations
   clients       Client[]
@@ -35,6 +38,7 @@ model User {
 enum UserRole {
   ADMIN
   MANAGER
+  ADJUSTER
   AGENT
   CSR
 }
@@ -42,61 +46,61 @@ enum UserRole {
 // ==================== CLIENT MANAGEMENT ====================
 
 model Client {
-  id              String       @id @default(cuid())
-  type            ClientType
-  status          ClientStatus @default(PROSPECT)
+  id     String       @id @default(cuid())
+  type   ClientType
+  status ClientStatus @default(PROSPECT)
 
   // Personal info
-  firstName       String
-  lastName        String
-  email           String?
-  phone           String?
-  mobile          String?
-  dateOfBirth     DateTime?
-  ssn             String?
+  firstName   String
+  lastName    String
+  email       String?
+  phone       String?
+  mobile      String?
+  dateOfBirth DateTime?
+  ssn         String?
 
   // Business info (for commercial)
-  businessName    String?
-  businessType    String?
-  ein             String?
-  yearsInBusiness Int?
+  businessName      String?
+  businessType      String?
+  ein               String?
+  yearsInBusiness   Int?
   numberOfEmployees Int?
-  annualRevenue   Decimal?
+  annualRevenue     Decimal?
 
   // Address
-  address         String?
-  city            String?
-  state           String?
-  zipCode         String?
+  address String?
+  city    String?
+  state   String?
+  zipCode String?
 
   // Metadata
-  source          String?
-  referredBy      String?
-  notes           String?
-  tags            String[]
+  source     String?
+  referredBy String?
+  notes      String?
+  tags       String[]
 
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  agentId         String
-  agent           User         @relation(fields: [agentId], references: [id])
-  householdId     String?
-  household       Household?   @relation(fields: [householdId], references: [id])
+  agentId     String
+  agent       User       @relation(fields: [agentId], references: [id])
+  householdId String?
+  household   Household? @relation(fields: [householdId], references: [id])
 
-  contacts        Contact[]
-  lifeEvents      LifeEvent[]
-  documents       Document[]
-  policies        Policy[]
-  quotes          Quote[]
-  claims          Claim[]
-  activities      Activity[]
-  campaigns       CampaignRecipient[]
-  referrals       Referral[]   @relation("ReferredClients")
-  referredOthers  Referral[]   @relation("ReferringClient")
+  contacts                 Contact[]
+  lifeEvents               LifeEvent[]
+  documents                Document[]
+  policies                 Policy[]
+  quotes                   Quote[]
+  claims                   Claim[]
+  activities               Activity[]
+  campaigns                CampaignRecipient[]
+  referrals                Referral[]                @relation("ReferredClients")
+  referredOthers           Referral[]                @relation("ReferringClient")
   crossSellRecommendations CrossSellRecommendation[]
-  customerAuth    CustomerAuth?
-  payments        Payment[]
+  customerAuth             CustomerAuth?
+  payments                 Payment[]
 
   @@index([agentId])
   @@index([householdId])
@@ -117,35 +121,35 @@ enum ClientStatus {
 }
 
 model Household {
-  id          String    @id @default(cuid())
-  name        String
-  email       String?
-  phone       String?
-  address     String?
-  city        String?
-  state       String?
-  zipCode     String?
-  notes       String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  city      String?
+  state     String?
+  zipCode   String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  members     Client[]
+  members Client[]
 }
 
 model Contact {
-  id          String      @id @default(cuid())
-  clientId    String
-  client      Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
-  type        ContactType
-  name        String
+  type         ContactType
+  name         String
   relationship String?
-  email       String?
-  phone       String?
-  isPrimary   Boolean     @default(false)
+  email        String?
+  phone        String?
+  isPrimary    Boolean     @default(false)
 
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([clientId])
 }
@@ -158,32 +162,32 @@ enum ContactType {
 }
 
 model LifeEvent {
-  id          String    @id @default(cuid())
-  clientId    String
-  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
-  type        String
-  title       String
-  description String?
-  eventDate   DateTime
+  type         String
+  title        String
+  description  String?
+  eventDate    DateTime
   followUpDate DateTime?
-  isCompleted Boolean   @default(false)
+  isCompleted  Boolean   @default(false)
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([clientId])
   @@index([eventDate])
 }
 
 model Document {
-  id          String       @id @default(cuid())
-  clientId    String?
-  client      Client?      @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  policyId    String?
-  policy      Policy?      @relation(fields: [policyId], references: [id], onDelete: Cascade)
-  claimId     String?
-  claim       Claim?       @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  id       String  @id @default(cuid())
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  policyId String?
+  policy   Policy? @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  claimId  String?
+  claim    Claim?  @relation(fields: [claimId], references: [id], onDelete: Cascade)
 
   type        DocumentType
   name        String
@@ -192,10 +196,10 @@ model Document {
   fileSize    Int?
   mimeType    String?
   description String?
-  aiAnalysis    Json?
+  aiAnalysis  Json?
 
-  uploadedAt  DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  uploadedAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([clientId])
   @@index([policyId])
@@ -215,44 +219,44 @@ enum DocumentType {
 // ==================== POLICY MANAGEMENT ====================
 
 model Carrier {
-  id          String    @id @default(cuid())
-  name        String
-  code        String    @unique
-  phone       String?
-  email       String?
-  website     String?
-  address     String?
-  isActive    Boolean   @default(true)
+  id       String  @id @default(cuid())
+  name     String
+  code     String  @unique
+  phone    String?
+  email    String?
+  website  String?
+  address  String?
+  isActive Boolean @default(true)
 
   // Commission rates by line of business
   commissionRates Json?
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  policies    Policy[]
-  quotes      Quote[]
+  policies Policy[]
+  quotes   Quote[]
 }
 
 model Policy {
-  id              String        @id @default(cuid())
-  policyNumber    String        @unique
-  status          PolicyStatus  @default(ACTIVE)
+  id           String       @id @default(cuid())
+  policyNumber String       @unique
+  status       PolicyStatus @default(ACTIVE)
 
   // Policy details
-  lineOfBusiness  LineOfBusiness
-  type            String
+  lineOfBusiness LineOfBusiness
+  type           String
 
   // Dates
-  effectiveDate   DateTime
-  expirationDate  DateTime
-  cancelDate      DateTime?
+  effectiveDate  DateTime
+  expirationDate DateTime
+  cancelDate     DateTime?
 
   // Premium
-  premium         Decimal
-  downPayment     Decimal?
-  installments    Int?
-  billingMethod   BillingMethod?
+  premium       Decimal
+  downPayment   Decimal?
+  installments  Int?
+  billingMethod BillingMethod?
 
   // Coverage summary
   coverageSummary Json?
@@ -260,30 +264,30 @@ model Policy {
   limits          Json?
 
   // Renewal
-  autoRenew       Boolean       @default(false)
-  renewedFromId   String?
+  autoRenew     Boolean @default(false)
+  renewedFromId String?
 
-  notes           String?
+  notes String?
 
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  clientId        String
-  client          Client        @relation(fields: [clientId], references: [id])
-  carrierId       String
-  carrier         Carrier       @relation(fields: [carrierId], references: [id])
-  agentId         String
-  agent           User          @relation(fields: [agentId], references: [id])
-  quoteId         String?
-  quote           Quote?        @relation(fields: [quoteId], references: [id])
+  clientId  String
+  client    Client  @relation(fields: [clientId], references: [id])
+  carrierId String
+  carrier   Carrier @relation(fields: [carrierId], references: [id])
+  agentId   String
+  agent     User    @relation(fields: [agentId], references: [id])
+  quoteId   String?
+  quote     Quote?  @relation(fields: [quoteId], references: [id])
 
-  endorsements    Endorsement[]
-  documents       Document[]
-  claims          Claim[]
-  commissions     Commission[]
-  activities      Activity[]
-  payments        Payment[]
+  endorsements     Endorsement[]
+  documents        Document[]
+  claims           Claim[]
+  commissions      Commission[]
+  activities       Activity[]
+  payments         Payment[]
   paymentSchedules PaymentSchedule[]
 
   @@index([clientId])
@@ -324,19 +328,19 @@ enum BillingMethod {
 }
 
 model Endorsement {
-  id              String    @id @default(cuid())
-  policyId        String
-  policy          Policy    @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  policyId String
+  policy   Policy @relation(fields: [policyId], references: [id], onDelete: Cascade)
 
   endorsementNumber String?
-  type            String
-  description     String
-  effectiveDate   DateTime
-  premiumChange   Decimal?
-  status          String    @default("PENDING")
+  type              String
+  description       String
+  effectiveDate     DateTime
+  premiumChange     Decimal?
+  status            String   @default("PENDING")
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([policyId])
 }
@@ -344,49 +348,49 @@ model Endorsement {
 // ==================== QUOTING ====================
 
 model Quote {
-  id              String      @id @default(cuid())
-  quoteNumber     String      @unique
-  status          QuoteStatus @default(DRAFT)
+  id          String      @id @default(cuid())
+  quoteNumber String      @unique
+  status      QuoteStatus @default(DRAFT)
 
   // Quote details
-  lineOfBusiness  LineOfBusiness
-  type            String?
-  effectiveDate   DateTime
+  lineOfBusiness LineOfBusiness
+  type           String?
+  effectiveDate  DateTime
 
   // Risk information
-  riskInfo        Json?
+  riskInfo Json?
 
   // Premium
-  premium         Decimal?
-  fees            Decimal?
-  taxes           Decimal?
-  totalPremium    Decimal?
+  premium      Decimal?
+  fees         Decimal?
+  taxes        Decimal?
+  totalPremium Decimal?
 
   // Comparison data (for multi-carrier)
-  carrierQuotes   Json?
+  carrierQuotes Json?
 
-  notes           String?
-  expiresAt       DateTime?
+  notes     String?
+  expiresAt DateTime?
 
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  clientId        String
-  client          Client      @relation(fields: [clientId], references: [id])
-  carrierId       String?
-  carrier         Carrier?    @relation(fields: [carrierId], references: [id])
-  agentId         String
-  agent           User        @relation(fields: [agentId], references: [id])
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id])
+  carrierId String?
+  carrier   Carrier? @relation(fields: [carrierId], references: [id])
+  agentId   String
+  agent     User     @relation(fields: [agentId], references: [id])
 
   // Renewal
-  isRenewal       Boolean       @default(false)
+  isRenewal       Boolean @default(false)
   renewalPolicyId String?
 
-  policies        Policy[]
-  proposal        Proposal?
-  followUps       QuoteFollowUp[]
-  activities      Activity[]
+  policies           Policy[]
+  proposal           Proposal?
+  followUps          QuoteFollowUp[]
+  activities         Activity[]
   underwritingResult UnderwritingResult?
 
   @@index([clientId])
@@ -405,34 +409,34 @@ enum QuoteStatus {
 }
 
 model Proposal {
-  id            String    @id @default(cuid())
-  quoteId       String    @unique
-  quote         Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  quoteId String @unique
+  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 
-  content       Json
-  sentAt        DateTime?
-  viewedAt      DateTime?
-  signedAt      DateTime?
-  signatureUrl  String?
+  content      Json
+  sentAt       DateTime?
+  viewedAt     DateTime?
+  signedAt     DateTime?
+  signatureUrl String?
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   signatureAudits SignatureAudit[]
 }
 
 model QuoteFollowUp {
-  id          String    @id @default(cuid())
-  quoteId     String
-  quote       Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  quoteId String
+  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 
   type        String
   scheduledAt DateTime
   completedAt DateTime?
   notes       String?
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([quoteId])
   @@index([scheduledAt])
@@ -441,60 +445,83 @@ model QuoteFollowUp {
 // ==================== CLAIMS ====================
 
 model Claim {
-  id              String      @id @default(cuid())
-  claimNumber     String      @unique
-  status          ClaimStatus @default(REPORTED)
+  id          String      @id @default(cuid())
+  claimNumber String      @unique
+  status      ClaimStatus @default(REPORTED)
 
   // Claim details
-  type            String
-  dateOfLoss      DateTime
-  dateReported    DateTime    @default(now())
-  description     String
+  type         String
+  dateOfLoss   DateTime
+  dateReported DateTime @default(now())
+  description  String
 
   // Location
-  lossLocation    String?
+  lossLocation String?
 
   // Amounts
-  estimatedLoss   Decimal?
-  deductible      Decimal?
-  reserveAmount   Decimal?
-  paidAmount      Decimal?
+  estimatedLoss Decimal?
+  deductible    Decimal?
+  reserveAmount Decimal?
+  paidAmount    Decimal?
 
   // Adjuster
-  adjusterName    String?
-  adjusterPhone   String?
-  adjusterEmail   String?
+  adjusterName  String?
+  adjusterPhone String?
+  adjusterEmail String?
 
-  notes           String?
-  closedAt        DateTime?
-  closedReason    String?
+  notes        String?
+  closedAt     DateTime?
+  closedReason String?
 
   // AI Fraud Detection
   aiClassification String?
   aiRiskScore      Float?
   aiFlags          Json?
 
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  // Governed lifecycle controls. Nullable provenance fields preserve legacy
+  // records while new intake requires them.
+  workflowVersion    Int      @default(1)
+  intakeEventId      String?  @unique
+  intakePayloadHash  String?
+  sourceSystem       String?
+  sourceRecordId     String?
+  jurisdiction       String?
+  coverageSnapshot   Json?
+  legalHold          Boolean  @default(false)
+  retainedUntil      DateTime @default(dbgenerated("(CURRENT_TIMESTAMP + '7 years'::interval)"))
+  assignedAdjusterId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  policyId        String
-  policy          Policy      @relation(fields: [policyId], references: [id])
-  clientId        String
-  client          Client      @relation(fields: [clientId], references: [id])
-  agentId         String
-  agent           User        @relation(fields: [agentId], references: [id])
+  policyId String
+  policy   Policy @relation(fields: [policyId], references: [id])
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+  agentId  String
+  agent    User   @relation(fields: [agentId], references: [id])
 
-  documents       Document[]
-  communications  ClaimCommunication[]
-  settlements     Settlement[]
-  activities      Activity[]
-  fraudAssessments ClaimFraudAssessment[]
+  documents         Document[]
+  communications    ClaimCommunication[]
+  settlements       Settlement[]
+  activities        Activity[]
+  fraudAssessments  ClaimFraudAssessment[]
+  caseEvents        ClaimCaseEvent[]
+  evidenceItems     ClaimEvidence[]
+  reserveEntries    ClaimReserveEntry[]
+  adjudications     ClaimAdjudication[]
+  appeals           ClaimAppeal[]
+  subrogations      ClaimSubrogation[]
+  financialEntries  ClaimFinancialEntry[]
+  integrationEvents ClaimIntegrationEvent[]
 
+  @@unique([sourceSystem, sourceRecordId])
   @@index([policyId])
   @@index([clientId])
   @@index([status])
   @@index([aiRiskScore])
+  @@index([assignedAdjusterId])
 }
 
 enum ClaimStatus {
@@ -510,80 +537,250 @@ enum ClaimStatus {
 }
 
 model ClaimCommunication {
-  id          String    @id @default(cuid())
-  claimId     String
-  claim       Claim     @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  claimId String
+  claim   Claim  @relation(fields: [claimId], references: [id], onDelete: Cascade)
 
   type        String
-  direction   String    // INBOUND or OUTBOUND
+  direction   String // INBOUND or OUTBOUND
   subject     String?
   content     String
   contactName String?
 
-  createdAt   DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@index([claimId])
 }
 
 model Settlement {
-  id                  String    @id @default(cuid())
-  claimId             String
-  claim               Claim     @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  claimId String
+  claim   Claim  @relation(fields: [claimId], references: [id], onDelete: Cascade)
 
-  amount              Decimal
-  type                String
-  description         String?
-  paidDate            DateTime?
-  checkNumber         String?
+  amount      Decimal
+  type        String
+  description String?
+  paidDate    DateTime?
+  checkNumber String?
 
   // Payment execution
-  status              String    @default("PENDING") // PENDING, APPROVED, PROCESSING, PAID, FAILED
-  stripeTransferId    String?
-  paymentMethod       String?   // CHECK, ACH, WIRE, STRIPE
-  recipientName       String?
-  recipientAccountId  String?
-  approvedBy          String?
-  approvedAt          DateTime?
+  status             String    @default("PENDING") // PENDING, APPROVED, PROCESSING, PAID, FAILED
+  stripeTransferId   String?
+  paymentMethod      String? // CHECK, ACH, WIRE, STRIPE
+  recipientName      String?
+  recipientAccountId String?
+  approvedBy         String?
+  approvedAt         DateTime?
 
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([claimId])
   @@index([status])
 }
 
+// ==================== GOVERNED CLAIM LIFECYCLE ====================
+
+model ClaimCaseEvent {
+  id              String       @id @default(cuid())
+  claimId         String
+  claim           Claim        @relation(fields: [claimId], references: [id], onDelete: Restrict)
+  sequence        Int
+  action          String
+  fromStatus      ClaimStatus?
+  toStatus        ClaimStatus?
+  actorId         String
+  actorRole       String
+  externalEventId String?      @unique
+  payload         Json
+  payloadHash     String
+  previousHash    String
+  eventHash       String
+  occurredAt      DateTime     @default(now())
+
+  @@unique([claimId, sequence])
+  @@index([claimId, occurredAt])
+}
+
+model ClaimEvidence {
+  id              String   @id @default(cuid())
+  claimId         String
+  claim           Claim    @relation(fields: [claimId], references: [id], onDelete: Restrict)
+  externalEventId String   @unique
+  sourceSystem    String
+  sourceRecordId  String
+  kind            String
+  uri             String
+  sha256          String
+  contentType     String
+  sizeBytes       Int
+  capturedAt      DateTime
+  recordedBy      String
+  payloadHash     String
+  createdAt       DateTime @default(now())
+
+  @@unique([sourceSystem, sourceRecordId])
+  @@index([claimId, createdAt])
+}
+
+model ClaimReserveEntry {
+  id              String   @id @default(cuid())
+  claimId         String
+  claim           Claim    @relation(fields: [claimId], references: [id], onDelete: Restrict)
+  externalEventId String   @unique
+  previousAmount  Decimal
+  newAmount       Decimal
+  deltaAmount     Decimal
+  reason          String
+  actorId         String
+  createdAt       DateTime @default(now())
+
+  @@index([claimId, createdAt])
+}
+
+model ClaimAdjudication {
+  id                    String   @id @default(cuid())
+  claimId               String
+  claim                 Claim    @relation(fields: [claimId], references: [id], onDelete: Restrict)
+  externalEventId       String   @unique
+  decision              String
+  approvedAmount        Decimal?
+  jurisdiction          String
+  coverageBasis         Json
+  evidenceIds           Json
+  rationale             String
+  adjusterId            String
+  adjusterLicenseNumber String
+  attestation           String
+  createdAt             DateTime @default(now())
+
+  @@index([claimId, createdAt])
+}
+
+model ClaimAppeal {
+  id              String               @id @default(cuid())
+  claimId         String
+  claim           Claim                @relation(fields: [claimId], references: [id], onDelete: Restrict)
+  externalEventId String               @unique
+  reason          String
+  submittedBy     String
+  createdAt       DateTime             @default(now())
+  decision        ClaimAppealDecision?
+
+  @@index([claimId, createdAt])
+}
+
+model ClaimAppealDecision {
+  id                    String      @id @default(cuid())
+  appealId              String      @unique
+  appeal                ClaimAppeal @relation(fields: [appealId], references: [id], onDelete: Restrict)
+  externalEventId       String      @unique
+  outcome               String
+  approvedAmount        Decimal?
+  rationale             String
+  reviewedBy            String
+  reviewerLicenseNumber String
+  attestation           String
+  createdAt             DateTime    @default(now())
+}
+
+model ClaimSubrogation {
+  id               String               @id @default(cuid())
+  claimId          String
+  claim            Claim                @relation(fields: [claimId], references: [id], onDelete: Restrict)
+  externalEventId  String               @unique
+  responsibleParty String
+  basis            String
+  expectedRecovery Decimal
+  openedBy         String
+  createdAt        DateTime             @default(now())
+  recoveryEntries  ClaimRecoveryEntry[]
+
+  @@index([claimId, createdAt])
+}
+
+model ClaimRecoveryEntry {
+  id                    String           @id @default(cuid())
+  subrogationId         String
+  subrogation           ClaimSubrogation @relation(fields: [subrogationId], references: [id], onDelete: Restrict)
+  externalEventId       String           @unique
+  amount                Decimal
+  sourceSystem          String
+  externalTransactionId String
+  payloadHash           String
+  recordedBy            String
+  createdAt             DateTime         @default(now())
+
+  @@unique([sourceSystem, externalTransactionId])
+  @@index([subrogationId, createdAt])
+}
+
+model ClaimFinancialEntry {
+  id                    String   @id @default(cuid())
+  claimId               String
+  claim                 Claim    @relation(fields: [claimId], references: [id], onDelete: Restrict)
+  kind                  String
+  amount                Decimal
+  externalEventId       String   @unique
+  sourceSystem          String
+  externalTransactionId String?
+  payloadHash           String
+  recordedBy            String
+  createdAt             DateTime @default(now())
+
+  @@unique([sourceSystem, externalTransactionId])
+  @@index([claimId, kind, createdAt])
+}
+
+model ClaimIntegrationEvent {
+  id              String   @id @default(cuid())
+  claimId         String
+  claim           Claim    @relation(fields: [claimId], references: [id], onDelete: Restrict)
+  externalEventId String   @unique
+  direction       String
+  adapter         String
+  operation       String
+  sourceRecordId  String
+  payloadHash     String
+  outcome         String
+  responseRef     String?
+  occurredAt      DateTime @default(now())
+
+  @@index([claimId, occurredAt])
+}
+
 // ==================== COMMISSION TRACKING ====================
 
 model Commission {
-  id              String           @id @default(cuid())
-  status          CommissionStatus @default(PENDING)
+  id     String           @id @default(cuid())
+  status CommissionStatus @default(PENDING)
 
   // Commission details
-  type            CommissionType
-  amount          Decimal
-  rate            Decimal?
-  basePremium     Decimal?
+  type        CommissionType
+  amount      Decimal
+  rate        Decimal?
+  basePremium Decimal?
 
   // Statement info
-  statementId     String?
-  statementDate   DateTime?
+  statementId   String?
+  statementDate DateTime?
 
   // Dates
-  earnedDate      DateTime?
-  paidDate        DateTime?
+  earnedDate DateTime?
+  paidDate   DateTime?
 
-  notes           String?
+  notes String?
 
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  policyId        String
-  policy          Policy           @relation(fields: [policyId], references: [id])
-  agentId         String
-  agent           User             @relation(fields: [agentId], references: [id])
+  policyId String
+  policy   Policy @relation(fields: [policyId], references: [id])
+  agentId  String
+  agent    User   @relation(fields: [agentId], references: [id])
 
-  splits          CommissionSplit[]
+  splits CommissionSplit[]
 
   @@index([policyId])
   @@index([agentId])
@@ -609,15 +806,15 @@ enum CommissionType {
 }
 
 model CommissionSplit {
-  id            String     @id @default(cuid())
-  commissionId  String
-  commission    Commission @relation(fields: [commissionId], references: [id], onDelete: Cascade)
+  id           String     @id @default(cuid())
+  commissionId String
+  commission   Commission @relation(fields: [commissionId], references: [id], onDelete: Cascade)
 
-  producerId    String
-  percentage    Decimal
-  amount        Decimal
+  producerId String
+  percentage Decimal
+  amount     Decimal
 
-  createdAt     DateTime   @default(now())
+  createdAt DateTime @default(now())
 
   @@index([commissionId])
   @@index([producerId])
@@ -626,34 +823,34 @@ model CommissionSplit {
 // ==================== MARKETING & RENEWALS ====================
 
 model Campaign {
-  id            String           @id @default(cuid())
-  name          String
-  type          CampaignType
-  status        CampaignStatus   @default(DRAFT)
+  id     String         @id @default(cuid())
+  name   String
+  type   CampaignType
+  status CampaignStatus @default(DRAFT)
 
   // Content
-  subject       String?
-  content       String?
-  template      String?
+  subject  String?
+  content  String?
+  template String?
 
   // Schedule
-  scheduledAt   DateTime?
-  sentAt        DateTime?
+  scheduledAt DateTime?
+  sentAt      DateTime?
 
   // Metrics
   recipientCount Int?
-  openCount     Int?
-  clickCount    Int?
-  responseCount Int?
+  openCount      Int?
+  clickCount     Int?
+  responseCount  Int?
 
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  createdById   String
-  createdBy     User             @relation(fields: [createdById], references: [id])
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
 
-  recipients    CampaignRecipient[]
+  recipients CampaignRecipient[]
 
   @@index([createdById])
   @@index([status])
@@ -677,11 +874,11 @@ enum CampaignStatus {
 }
 
 model CampaignRecipient {
-  id          String    @id @default(cuid())
-  campaignId  String
-  campaign    Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  clientId    String
-  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  clientId   String
+  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   status      String    @default("PENDING")
   sentAt      DateTime?
@@ -695,22 +892,22 @@ model CampaignRecipient {
 }
 
 model Referral {
-  id              String    @id @default(cuid())
+  id                String  @id @default(cuid())
   referringClientId String
-  referringClient Client    @relation("ReferringClient", fields: [referringClientId], references: [id])
-  referredClientId String?
-  referredClient  Client?   @relation("ReferredClients", fields: [referredClientId], references: [id])
+  referringClient   Client  @relation("ReferringClient", fields: [referringClientId], references: [id])
+  referredClientId  String?
+  referredClient    Client? @relation("ReferredClients", fields: [referredClientId], references: [id])
 
-  referredName    String?
-  referredEmail   String?
-  referredPhone   String?
-  status          String    @default("PENDING")
-  notes           String?
-  rewardGiven     Boolean   @default(false)
-  rewardAmount    Decimal?
+  referredName  String?
+  referredEmail String?
+  referredPhone String?
+  status        String   @default("PENDING")
+  notes         String?
+  rewardGiven   Boolean  @default(false)
+  rewardAmount  Decimal?
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([referringClientId])
   @@index([referredClientId])
@@ -725,19 +922,19 @@ model Activity {
   description String?
   metadata    Json?
 
-  createdAt   DateTime     @default(now())
+  createdAt DateTime @default(now())
 
   // Relations
-  userId      String
-  user        User         @relation(fields: [userId], references: [id])
-  clientId    String?
-  client      Client?      @relation(fields: [clientId], references: [id])
-  policyId    String?
-  policy      Policy?      @relation(fields: [policyId], references: [id])
-  quoteId     String?
-  quote       Quote?       @relation(fields: [quoteId], references: [id])
-  claimId     String?
-  claim       Claim?       @relation(fields: [claimId], references: [id])
+  userId   String
+  user     User    @relation(fields: [userId], references: [id])
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id])
+  policyId String?
+  policy   Policy? @relation(fields: [policyId], references: [id])
+  quoteId  String?
+  quote    Quote?  @relation(fields: [quoteId], references: [id])
+  claimId  String?
+  claim    Claim?  @relation(fields: [claimId], references: [id])
 
   @@index([userId])
   @@index([clientId])
@@ -768,17 +965,17 @@ enum ActivityType {
 }
 
 model Notification {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id])
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
-  type        String
-  title       String
-  message     String
-  link        String?
-  isRead      Boolean   @default(false)
+  type    String
+  title   String
+  message String
+  link    String?
+  isRead  Boolean @default(false)
 
-  createdAt   DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([isRead])
@@ -787,17 +984,17 @@ model Notification {
 // ==================== EMAIL TEMPLATES ====================
 
 model EmailTemplate {
-  id          String    @id @default(cuid())
-  name        String
-  type        String    // WELCOME, RENEWAL, FOLLOW_UP, BIRTHDAY, CLAIM, CROSS_SELL
-  subject     String
-  content     String
-  variables   String[]  // List of variable names like client_name, agent_name
-  status      String    @default("ACTIVE") // ACTIVE, DRAFT, ARCHIVED
-  usageCount  Int       @default(0)
+  id         String   @id @default(cuid())
+  name       String
+  type       String // WELCOME, RENEWAL, FOLLOW_UP, BIRTHDAY, CLAIM, CROSS_SELL
+  subject    String
+  content    String
+  variables  String[] // List of variable names like client_name, agent_name
+  status     String   @default("ACTIVE") // ACTIVE, DRAFT, ARCHIVED
+  usageCount Int      @default(0)
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([type])
   @@index([status])
@@ -806,49 +1003,49 @@ model EmailTemplate {
 // ==================== AI & ANALYTICS ====================
 
 model AIAnalysis {
-  id            String    @id @default(cuid())
-  type          String
-  entityType    String
-  entityId      String
+  id         String @id @default(cuid())
+  type       String
+  entityType String
+  entityId   String
 
-  input         Json
-  output        Json
-  confidence    Decimal?
+  input      Json
+  output     Json
+  confidence Decimal?
 
-  createdAt     DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@index([entityType, entityId])
 }
 
 model RenewalPrediction {
-  id            String    @id @default(cuid())
-  policyId      String
+  id       String @id @default(cuid())
+  policyId String
 
-  renewalDate   DateTime
-  retentionScore Decimal
-  riskFactors   Json?
+  renewalDate     DateTime
+  retentionScore  Decimal
+  riskFactors     Json?
   recommendations Json?
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([policyId])
   @@index([renewalDate])
 }
 
 model CrossSellRecommendation {
-  id            String    @id @default(cuid())
-  clientId      String
-  client        Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   recommendedProduct String
-  score         Decimal
-  reasoning     String?
-  currentPolicies String[]
-  status        String    @default("PENDING")
+  score              Decimal
+  reasoning          String?
+  currentPolicies    String[]
+  status             String   @default("PENDING")
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([clientId])
   @@index([status])
@@ -857,17 +1054,17 @@ model CrossSellRecommendation {
 // ==================== CUSTOMER PORTAL ====================
 
 model CustomerAuth {
-  id            String    @id @default(cuid())
-  clientId      String    @unique
-  client        Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  clientId String @unique
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
-  email         String    @unique
-  passwordHash  String
-  isActive      Boolean   @default(true)
-  lastLoginAt   DateTime?
+  email        String    @unique
+  passwordHash String
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([email])
 }
@@ -884,36 +1081,36 @@ enum PaymentStatus {
 }
 
 model Payment {
-  id                String        @id @default(cuid())
-  status            PaymentStatus @default(PENDING)
+  id     String        @id @default(cuid())
+  status PaymentStatus @default(PENDING)
 
-  amount            Decimal
-  currency          String        @default("usd")
-  description       String?
+  amount      Decimal
+  currency    String  @default("usd")
+  description String?
 
   // Stripe fields
-  stripeSessionId   String?       @unique
+  stripeSessionId       String? @unique
   stripePaymentIntentId String?
-  stripeCustomerId  String?
+  stripeCustomerId      String?
 
   // Payment link
-  paymentLinkUrl    String?
+  paymentLinkUrl       String?
   paymentLinkExpiresAt DateTime?
 
-  paidAt            DateTime?
-  failedAt          DateTime?
-  refundedAt        DateTime?
+  paidAt     DateTime?
+  failedAt   DateTime?
+  refundedAt DateTime?
 
-  metadata          Json?
+  metadata Json?
 
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  policyId          String?
-  policy            Policy?       @relation(fields: [policyId], references: [id])
-  clientId          String
-  client            Client        @relation(fields: [clientId], references: [id])
+  policyId String?
+  policy   Policy? @relation(fields: [policyId], references: [id])
+  clientId String
+  client   Client  @relation(fields: [clientId], references: [id])
 
   @@index([clientId])
   @@index([policyId])
@@ -924,18 +1121,18 @@ model Payment {
 // ==================== E-SIGNATURE ====================
 
 model SignatureAudit {
-  id            String    @id @default(cuid())
-  proposalId    String
-  proposal      Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  proposalId String
+  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
-  action        String    // VIEWED, SIGNED, DECLINED
+  action        String // VIEWED, SIGNED, DECLINED
   signerName    String
   signerEmail   String
   ipAddress     String?
   userAgent     String?
-  signatureData String?   // base64 PNG data
+  signatureData String? // base64 PNG data
 
-  createdAt     DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@index([proposalId])
 }
@@ -943,43 +1140,43 @@ model SignatureAudit {
 // ==================== UNDERWRITING ENGINE ====================
 
 model UnderwritingRule {
-  id              String          @id @default(cuid())
-  name            String
-  description     String?
-  lineOfBusiness  LineOfBusiness
-  category        String          // e.g., "age", "claims_history", "credit_score", "property_age"
+  id             String         @id @default(cuid())
+  name           String
+  description    String?
+  lineOfBusiness LineOfBusiness
+  category       String // e.g., "age", "claims_history", "credit_score", "property_age"
 
   // Rule definition
-  field           String          // field to evaluate, e.g., "client.dateOfBirth", "claims.count"
-  operator        String          // GT, LT, GTE, LTE, EQ, NEQ, BETWEEN, IN
-  value           String          // the comparison value (JSON-encoded for complex types)
-  riskPoints      Int             // points added to risk score when rule triggers
+  field      String // field to evaluate, e.g., "client.dateOfBirth", "claims.count"
+  operator   String // GT, LT, GTE, LTE, EQ, NEQ, BETWEEN, IN
+  value      String // the comparison value (JSON-encoded for complex types)
+  riskPoints Int // points added to risk score when rule triggers
 
-  isActive        Boolean         @default(true)
-  priority        Int             @default(0)
+  isActive Boolean @default(true)
+  priority Int     @default(0)
 
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([lineOfBusiness])
   @@index([isActive])
 }
 
 model UnderwritingResult {
-  id              String    @id @default(cuid())
-  quoteId         String    @unique
-  quote           Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  quoteId String @unique
+  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 
-  riskScore       Int
-  maxScore        Int       @default(100)
-  decision        String    // APPROVED, REFERRED, DECLINED
-  factors         Json      // array of { ruleId, ruleName, riskPoints, detail }
-  notes           String?
-  reviewedBy      String?
-  reviewedAt      DateTime?
+  riskScore  Int
+  maxScore   Int       @default(100)
+  decision   String // APPROVED, REFERRED, DECLINED
+  factors    Json // array of { ruleId, ruleName, riskPoints, detail }
+  notes      String?
+  reviewedBy String?
+  reviewedAt DateTime?
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([decision])
 }
@@ -987,23 +1184,23 @@ model UnderwritingResult {
 // ==================== COMPLIANCE ENGINE ====================
 
 model ComplianceRule {
-  id              String    @id @default(cuid())
-  name            String
-  description     String?
-  category        String    // LICENSING, DISCLOSURE, DOCUMENTATION, REPORTING, PRIVACY
-  state           String?   // state code (null = all states)
-  lineOfBusiness  LineOfBusiness?
+  id             String          @id @default(cuid())
+  name           String
+  description    String?
+  category       String // LICENSING, DISCLOSURE, DOCUMENTATION, REPORTING, PRIVACY
+  state          String? // state code (null = all states)
+  lineOfBusiness LineOfBusiness?
 
-  requirement     String    // what must be done
-  frequency       String?   // ONCE, ANNUAL, QUARTERLY, MONTHLY, ON_EVENT
-  dueDate         DateTime?
-  isActive        Boolean   @default(true)
-  severity        String    @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  requirement String // what must be done
+  frequency   String? // ONCE, ANNUAL, QUARTERLY, MONTHLY, ON_EVENT
+  dueDate     DateTime?
+  isActive    Boolean   @default(true)
+  severity    String    @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  checks          ComplianceCheck[]
+  checks ComplianceCheck[]
 
   @@index([category])
   @@index([state])
@@ -1011,19 +1208,19 @@ model ComplianceRule {
 }
 
 model ComplianceCheck {
-  id              String    @id @default(cuid())
-  ruleId          String
-  rule            ComplianceRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  id     String         @id @default(cuid())
+  ruleId String
+  rule   ComplianceRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
 
-  status          String    @default("PENDING") // PENDING, COMPLIANT, NON_COMPLIANT, WAIVED, EXPIRED
-  checkedAt       DateTime?
-  checkedBy       String?
-  notes           String?
-  evidence        String?   // URL or description of evidence
-  nextDueDate     DateTime?
+  status      String    @default("PENDING") // PENDING, COMPLIANT, NON_COMPLIANT, WAIVED, EXPIRED
+  checkedAt   DateTime?
+  checkedBy   String?
+  notes       String?
+  evidence    String? // URL or description of evidence
+  nextDueDate DateTime?
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([ruleId])
   @@index([status])
@@ -1051,17 +1248,17 @@ model JobLog {
 // ==================== RATING ENGINE ====================
 
 model RateTable {
-  id              String          @id @default(cuid())
-  lineOfBusiness  LineOfBusiness
-  baseRate        Decimal
-  effectiveDate   DateTime
-  expirationDate  DateTime?
-  description     String?
-  isActive        Boolean         @default(true)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id             String         @id @default(cuid())
+  lineOfBusiness LineOfBusiness
+  baseRate       Decimal
+  effectiveDate  DateTime
+  expirationDate DateTime?
+  description    String?
+  isActive       Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
-  factors         RateFactor[]
+  factors RateFactor[]
 
   @@index([lineOfBusiness])
   @@index([isActive])
@@ -1072,15 +1269,15 @@ model RateFactor {
   rateTableId String
   rateTable   RateTable @relation(fields: [rateTableId], references: [id], onDelete: Cascade)
 
-  category    String    // AGE, LOCATION, CLAIMS_HISTORY, DEDUCTIBLE, COVERAGE_LIMIT, VEHICLE_AGE, PROPERTY_VALUE, LOYALTY, CREDIT_SCORE
-  condition   Json      // { operator: "GT", value: 25 } or { operator: "IN", value: ["IL", "IN"] }
-  multiplier  Decimal   @default(1.0)
-  flatAmount  Decimal   @default(0)
-  priority    Int       @default(0)
+  category    String // AGE, LOCATION, CLAIMS_HISTORY, DEDUCTIBLE, COVERAGE_LIMIT, VEHICLE_AGE, PROPERTY_VALUE, LOYALTY, CREDIT_SCORE
+  condition   Json // { operator: "GT", value: 25 } or { operator: "IN", value: ["IL", "IN"] }
+  multiplier  Decimal @default(1.0)
+  flatAmount  Decimal @default(0)
+  priority    Int     @default(0)
   description String?
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([rateTableId])
   @@index([category])
@@ -1089,21 +1286,21 @@ model RateFactor {
 // ==================== PAYMENT SCHEDULE ====================
 
 model PaymentSchedule {
-  id              String    @id @default(cuid())
-  policyId        String
-  policy          Policy    @relation(fields: [policyId], references: [id], onDelete: Cascade)
-  clientId        String
+  id       String @id @default(cuid())
+  policyId String
+  policy   Policy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  clientId String
 
-  amount          Decimal
-  dueDate         DateTime
-  status          String    @default("SCHEDULED") // SCHEDULED, REMINDED, OVERDUE, PAID, FAILED, CANCELLED
-  remindersSent   Int       @default(0)
-  retryCount      Int       @default(0)
-  paymentId       String?   // Link to Payment record when paid
-  gracePeriodEnd  DateTime?
+  amount         Decimal
+  dueDate        DateTime
+  status         String    @default("SCHEDULED") // SCHEDULED, REMINDED, OVERDUE, PAID, FAILED, CANCELLED
+  remindersSent  Int       @default(0)
+  retryCount     Int       @default(0)
+  paymentId      String? // Link to Payment record when paid
+  gracePeriodEnd DateTime?
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([policyId])
   @@index([clientId])
@@ -1115,14 +1312,14 @@ model PaymentSchedule {
 
 model Escalation {
   id          String    @id @default(cuid())
-  type        String    // CLAIM, COMPLAINT, PAYMENT, COMPLIANCE, UNDERWRITING, OTHER
+  type        String // CLAIM, COMPLAINT, PAYMENT, COMPLIANCE, UNDERWRITING, OTHER
   priority    String    @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
   status      String    @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
   title       String
   description String
   slaDeadline DateTime
   assignedTo  String?
-  entityType  String?   // CLAIM, POLICY, CLIENT, COMPLAINT
+  entityType  String? // CLAIM, POLICY, CLIENT, COMPLAINT
   entityId    String?
   resolution  String?
   resolvedAt  DateTime?
@@ -1138,29 +1335,29 @@ model Escalation {
 // ==================== COMPLAINT MANAGEMENT ====================
 
 model Complaint {
-  id                String          @id @default(cuid())
-  complaintNumber   String          @unique
-  status            String          @default("OPEN") // OPEN, INVESTIGATING, RESOLVED, CLOSED
-  source            String          // PHONE, EMAIL, PORTAL, MAIL, REGULATORY
-  category          String          // SERVICE, BILLING, CLAIMS, COVERAGE, AGENT_CONDUCT, OTHER
-  summary           String
-  description       String
-  clientId          String?
+  id              String  @id @default(cuid())
+  complaintNumber String  @unique
+  status          String  @default("OPEN") // OPEN, INVESTIGATING, RESOLVED, CLOSED
+  source          String // PHONE, EMAIL, PORTAL, MAIL, REGULATORY
+  category        String // SERVICE, BILLING, CLAIMS, COVERAGE, AGENT_CONDUCT, OTHER
+  summary         String
+  description     String
+  clientId        String?
 
   // AI analysis
-  aiClassification  String?
-  aiSentiment       String?         // POSITIVE, NEUTRAL, NEGATIVE, VERY_NEGATIVE
+  aiClassification String?
+  aiSentiment      String? // POSITIVE, NEUTRAL, NEGATIVE, VERY_NEGATIVE
 
   // SLA
-  slaDeadline       DateTime
-  resolution        String?
-  resolvedAt        DateTime?
-  resolvedBy        String?
+  slaDeadline DateTime
+  resolution  String?
+  resolvedAt  DateTime?
+  resolvedBy  String?
 
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  notes             ComplaintNote[]
+  notes ComplaintNote[]
 
   @@index([status])
   @@index([clientId])
@@ -1172,11 +1369,11 @@ model ComplaintNote {
   complaintId String
   complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
 
-  content     String
-  isInternal  Boolean   @default(false)
-  createdBy   String
+  content    String
+  isInternal Boolean @default(false)
+  createdBy  String
 
-  createdAt   DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@index([complaintId])
 }
@@ -1184,28 +1381,28 @@ model ComplaintNote {
 // ==================== CLAIMS FRAUD ASSESSMENT ====================
 
 model ClaimFraudAssessment {
-  id              String    @id @default(cuid())
-  claimId         String
-  claim           Claim     @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  claimId String
+  claim   Claim  @relation(fields: [claimId], references: [id], onDelete: Cascade)
 
   // Scores
-  fraudRiskScore  Int       // 0-100 (100 = highest fraud risk)
-  fraudRiskLevel  String    // LOW, MODERATE, ELEVATED, HIGH, CRITICAL
+  fraudRiskScore Int // 0-100 (100 = highest fraud risk)
+  fraudRiskLevel String // LOW, MODERATE, ELEVATED, HIGH, CRITICAL
 
   // Risk factors array: [{ factor: string, severity: string, description: string }]
-  riskFactors     Json
+  riskFactors Json
 
   // AI output
-  explanation     String
-  recommendedAction String  // APPROVE_NORMAL, ENHANCED_REVIEW, SIU_REFERRAL, CLAIM_HOLD
+  explanation       String
+  recommendedAction String // APPROVE_NORMAL, ENHANCED_REVIEW, SIU_REFERRAL, CLAIM_HOLD
 
   // Meta
-  modelUsed       String?
-  triggeredEscalation Boolean @default(false)
-  escalationId    String?
-  assessedBy      String    // user id
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  modelUsed           String?
+  triggeredEscalation Boolean  @default(false)
+  escalationId        String?
+  assessedBy          String // user id
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   @@index([claimId])
   @@index([fraudRiskScore])
@@ -1216,18 +1413,18 @@ model ClaimFraudAssessment {
 // ==================== CALL LOGGING ====================
 
 model CallLog {
-  id              String    @id @default(cuid())
-  callSid         String    @unique
-  from            String
-  to              String
-  direction       String    // inbound, outbound
-  duration        Int?
-  recordingUrl    String?
-  transcription   String?
-  status          String    @default("initiated") // initiated, ringing, in-progress, completed, failed
+  id            String  @id @default(cuid())
+  callSid       String  @unique
+  from          String
+  to            String
+  direction     String // inbound, outbound
+  duration      Int?
+  recordingUrl  String?
+  transcription String?
+  status        String  @default("initiated") // initiated, ringing, in-progress, completed, failed
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([callSid])
   @@index([from])
@@ -1239,21 +1436,21 @@ model CallLog {
 // Generic per-feature AI run log: stores prompts, parsed results, tokens, errors.
 // Used for audit, replay, and cost telemetry across every AI feature.
 model AiResult {
-  id            String   @id @default(cuid())
-  feature       String   // e.g. "underwriting_narrator", "loss_run_analyzer"
-  refType       String?  // optional FK target type
-  refId         String?  // optional FK target id
-  userId        String?  // who initiated the run
-  model         String   // model name
-  input         Json?    // sanitized prompt inputs
-  output        Json?    // parsed AI response (ai_results JSONB)
-  rawText       String?
-  error         String?
-  durationMs    Int?
-  tokensIn      Int?
-  tokensOut     Int?
+  id         String  @id @default(cuid())
+  feature    String // e.g. "underwriting_narrator", "loss_run_analyzer"
+  refType    String? // optional FK target type
+  refId      String? // optional FK target id
+  userId     String? // who initiated the run
+  model      String // model name
+  input      Json? // sanitized prompt inputs
+  output     Json? // parsed AI response (ai_results JSONB)
+  rawText    String?
+  error      String?
+  durationMs Int?
+  tokensIn   Int?
+  tokensOut  Int?
 
-  createdAt     DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([feature, createdAt])
   @@index([refType, refId])
@@ -1262,90 +1459,90 @@ model AiResult {
 
 // AI-generated narrative justifying an underwriting decision (E&O audit trail).
 model UnderwritingNarrative {
-  id            String   @id @default(cuid())
-  refType       String   // "Policy" | "Quote"
-  refId         String
-  decision      String   // "BIND" | "DECLINE" | "REFER"
-  narrative     String   // AI prose
-  rationaleBullets Json  // list of factors
-  eoExposure    String   // low | medium | high
-  createdById   String?
+  id               String  @id @default(cuid())
+  refType          String // "Policy" | "Quote"
+  refId            String
+  decision         String // "BIND" | "DECLINE" | "REFER"
+  narrative        String // AI prose
+  rationaleBullets Json // list of factors
+  eoExposure       String // low | medium | high
+  createdById      String?
 
-  createdAt     DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([refType, refId])
 }
 
 // Loss-run PDF ingestion: store extracted claims + AI summary, link to a Quote.
 model LossRunIngestion {
-  id            String   @id @default(cuid())
-  quoteId       String?
-  fileName      String
-  fileBytes     Int
-  extractedClaims Json   // array of {date, type, paid, reserved, status, ...}
-  summary       String?
-  patterns      Json?
+  id               String  @id @default(cuid())
+  quoteId          String?
+  fileName         String
+  fileBytes        Int
+  extractedClaims  Json // array of {date, type, paid, reserved, status, ...}
+  summary          String?
+  patterns         Json?
   premiumImpactPct Float?
-  status        String   @default("processed") // processed | error
-  errorText     String?
+  status           String  @default("processed") // processed | error
+  errorText        String?
 
-  createdAt     DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([quoteId])
 }
 
 // Per-policy renewal-risk score with retention strategies.
 model RenewalRiskScore {
-  id            String   @id @default(cuid())
-  policyId      String
-  daysToRenewal Int
-  retentionScore Float   // 0..1 (1 = very likely to renew)
-  riskFactors   Json
-  strategies    Json
+  id              String  @id @default(cuid())
+  policyId        String
+  daysToRenewal   Int
+  retentionScore  Float // 0..1 (1 = very likely to renew)
+  riskFactors     Json
+  strategies      Json
   outreachDrafted Boolean @default(false)
   outreachContent String?
 
-  createdAt     DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([policyId, createdAt])
 }
 
 // Compliance check result attached to a policy/endorsement save attempt.
 model ComplianceCheckResult {
-  id            String   @id @default(cuid())
-  refType       String   // "Policy" | "Endorsement"
-  refId         String
-  blocking      Boolean  @default(false)
+  id              String  @id @default(cuid())
+  refType         String // "Policy" | "Endorsement"
+  refId           String
+  blocking        Boolean @default(false)
   complianceScore Float?
-  violations    Json
-  warnings      Json
+  violations      Json
+  warnings        Json
   recommendations Json
-  raw           Json?
+  raw             Json?
 
-  createdAt     DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([refType, refId, createdAt])
 }
 
 // FNOL draft created from a voice intake call before being promoted to a Claim.
 model FNOLDraft {
-  id            String   @id @default(cuid())
-  callSid       String?
-  callerPhone   String?
-  policyNumber  String?
-  lossDate      DateTime?
-  lossType      String?
-  description   String?
-  injuriesReported Boolean @default(false)
+  id                 String    @id @default(cuid())
+  callSid            String?
+  callerPhone        String?
+  policyNumber       String?
+  lossDate           DateTime?
+  lossType           String?
+  description        String?
+  injuriesReported   Boolean   @default(false)
   policeReportNumber String?
-  estimatedDamage Float?
-  missingFields Json?
-  confirmationNumber String @unique
-  promotedClaimId String?
-  status        String   @default("draft") // draft | confirmed | promoted | discarded
+  estimatedDamage    Float?
+  missingFields      Json?
+  confirmationNumber String    @unique
+  promotedClaimId    String?
+  status             String    @default("draft") // draft | confirmed | promoted | discarded
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([callSid])
   @@index([callerPhone])

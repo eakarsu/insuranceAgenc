@@ -22,7 +22,7 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/auto-login');
+      router.push('/login');
     }
   }, [status, router]);
 
@@ -38,10 +38,10 @@ export default function DashboardLayout({
         await axios.get('/api/dashboard/stats');
       } catch (err: any) {
         if (err?.response?.status === 401 || err?.response?.status === 500) {
-          // Session is stale — auto sign-out and re-login
+          // Session is stale — require a fresh interactive login.
           setRefreshing(true);
           await signOut({ redirect: false });
-          router.push('/auto-login');
+          router.push('/login');
         }
       }
     }).catch(() => {});

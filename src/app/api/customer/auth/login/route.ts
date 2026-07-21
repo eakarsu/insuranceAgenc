@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Set cookie
-    setCustomerCookie(token);
+    await setCustomerCookie(token);
 
     // Update last login
     await prisma.customerAuth.update({

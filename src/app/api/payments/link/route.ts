@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import stripe from '@/lib/stripe';
+import { getStripe } from '@/lib/stripe';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,6 +10,7 @@ export async function POST(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const stripe = getStripe();
 
     const body = await request.json();
     const { clientId, policyId, amount, description } = body;
@@ -27,54 +28,49 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Client not found' }, { status: 404 });
     }
 
-    const isPlaceholder = !process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === 'sk_test_placeholder';
+    const normalizedAmount = Number(amount);
+    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0 || normalizedAmount > 1_000_000_000) {
+      return NextResponse.json({ error: 'amount must be a positive supported monetary value' }, { status: 422 });
+    }
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    let stripeSessionId: string | null = null;
-    let paymentLinkUrl: string;
-
-    if (!isPlaceholder) {
-      const stripeSession = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        line_items: [
-          {
-            price_data: {
-              currency: 'usd',
-              product_data: {
-                name: description || `Insurance Payment - ${client.firstName} ${client.lastName}`,
-              },
-              unit_amount: Math.round(Number(amount) * 100),
+    const stripeSession = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: description || `Insurance Payment - ${client.firstName} ${client.lastName}`,
             },
-            quantity: 1,
+            unit_amount: Math.round(normalizedAmount * 100),
           },
-        ],
-        mode: 'payment',
-        success_url: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/portal/payments/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/portal/payments`,
-        expires_at: Math.floor(expiresAt.getTime() / 1000),
-        metadata: {
-          clientId,
-          policyId: policyId || '',
-          type: 'payment_link',
+          quantity: 1,
         },
-      });
+      ],
+      mode: 'payment',
+      success_url: `${process.env.NEXTAUTH_URL}/portal/payments/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXTAUTH_URL}/portal/payments`,
+      expires_at: Math.floor(expiresAt.getTime() / 1000),
+      metadata: {
+        clientId,
+        policyId: policyId || '',
+        type: 'payment_link',
+      },
+    });
 
-      stripeSessionId = stripeSession.id;
-      paymentLinkUrl = stripeSession.url || '';
-    } else {
-      stripeSessionId = `mock_link_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-      paymentLinkUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/portal/payments/pay?session=${stripeSessionId}`;
-    }
+    const paymentLinkUrl = stripeSession.url;
+    if (!paymentLinkUrl) throw new Error('Stripe did not return a checkout URL');
 
     const payment = await prisma.payment.create({
       data: {
-        amount: Number(amount),
+        amount: normalizedAmount,
         currency: 'usd',
         description: description || null,
         status: 'PENDING',
-        stripeSessionId,
+        stripeSessionId: stripeSession.id,
         clientId,
         policyId: policyId || null,
         paymentLinkUrl,

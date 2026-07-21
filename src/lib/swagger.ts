@@ -1,138 +1,48 @@
+const errorResponse = { description: 'Typed error', content: { 'application/json': { schema: { type: 'object', properties: { error: { type: 'string' }, code: { type: 'string' }, details: {} } } } } };
+
 export const swaggerSpec = {
-  openapi: '3.0.0',
+  openapi: '3.0.3',
   info: {
-    title: 'InsureFlow API',
-    version: '1.0.0',
-    description: 'Insurance Agency Management Platform API',
+    title: 'InsureFlow Governed Claims API',
+    version: '2.0.0',
+    description: 'Idempotent intake and explicit licensed claim workflow actions. Direct claim mutation and simulated payout are retired.',
   },
-  servers: [
-    { url: 'http://localhost:3000', description: 'Development' },
-  ],
   components: {
-    securitySchemes: {
-      session: {
-        type: 'apiKey',
-        in: 'cookie',
-        name: 'next-auth.session-token',
-        description: 'NextAuth session cookie',
-      },
+    securitySchemes: { session: { type: 'apiKey', in: 'cookie', name: 'next-auth.session-token' } },
+    parameters: {
+      idempotencyKey: { name: 'Idempotency-Key', in: 'header', required: true, schema: { type: 'string', minLength: 8, maxLength: 160 } },
     },
   },
   security: [{ session: [] }],
   paths: {
     '/api/claims': {
-      get: {
-        tags: ['Claims'],
-        summary: 'List claims',
-        parameters: [
-          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
-          { name: 'limit', in: 'query', schema: { type: 'integer', default: 10 } },
-          { name: 'search', in: 'query', schema: { type: 'string' } },
-          { name: 'status', in: 'query', schema: { type: 'string' } },
-        ],
-        responses: { 200: { description: 'Paginated list of claims' } },
-      },
+      get: { summary: 'List claims', responses: { 200: { description: 'Paginated claim list' }, 401: errorResponse } },
       post: {
-        tags: ['Claims'],
-        summary: 'Create a claim (auto-triggers AI analysis)',
+        summary: 'Record first notice of loss against an active policy',
+        parameters: [{ $ref: '#/components/parameters/idempotencyKey' }],
         requestBody: {
           required: true,
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                required: ['clientId', 'policyId', 'type', 'description'],
-                properties: {
-                  clientId: { type: 'string' },
-                  policyId: { type: 'string' },
-                  type: { type: 'string' },
-                  dateOfLoss: { type: 'string', format: 'date' },
-                  description: { type: 'string' },
-                  lossLocation: { type: 'string' },
-                  estimatedLoss: { type: 'number' },
-                },
-              },
-            },
-          },
+          content: { 'application/json': { schema: { type: 'object', required: ['sourceSystem', 'sourceRecordId', 'clientId', 'policyId', 'type', 'dateOfLoss', 'description', 'jurisdiction'], properties: {
+            sourceSystem: { type: 'string' }, sourceRecordId: { type: 'string' }, clientId: { type: 'string' }, policyId: { type: 'string' }, type: { type: 'string' }, dateOfLoss: { type: 'string', format: 'date-time' }, description: { type: 'string', minLength: 20 }, jurisdiction: { type: 'string', minLength: 2, maxLength: 2 }, lossLocation: { type: 'string' }, estimatedLoss: { type: 'number', minimum: 0 },
+          } } } },
         },
-        responses: { 201: { description: 'Created claim' } },
+        responses: { 201: { description: 'Governed claim created' }, 200: { description: 'Exact replay returned existing claim' }, 409: errorResponse, 422: errorResponse },
       },
     },
     '/api/claims/{id}': {
-      get: {
-        tags: ['Claims'],
-        summary: 'Get claim details (includes AI fields)',
-        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
-        responses: { 200: { description: 'Claim with AI analysis data' } },
-      },
-      put: { tags: ['Claims'], summary: 'Update claim', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { 200: { description: 'Updated claim' } } },
-      patch: { tags: ['Claims'], summary: 'Partial update claim', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { 200: { description: 'Updated claim' } } },
-      delete: { tags: ['Claims'], summary: 'Delete claim', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { 200: { description: 'Success' } } },
+      get: { summary: 'Read claim and complete governed evidence', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { 200: { description: 'Claim case' }, 404: errorResponse } },
+      put: { summary: 'Retired unsafe mutation', responses: { 410: errorResponse } },
+      patch: { summary: 'Retired unsafe mutation', responses: { 410: errorResponse } },
+      delete: { summary: 'Retained claims cannot be deleted', responses: { 405: errorResponse } },
     },
-    '/api/claims/{id}/ai-analysis': {
-      get: {
-        tags: ['AI Analysis'],
-        summary: 'Get stored AI analysis for a claim',
-        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
-        responses: { 200: { description: 'AI analysis data' } },
-      },
+    '/api/claims/{id}/workflow': {
       post: {
-        tags: ['AI Analysis'],
-        summary: 'Trigger AI analysis + fraud detection for a claim',
-        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
-        responses: { 200: { description: 'Analysis and fraud detection results' } },
+        summary: 'Apply one governed claim action',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }, { $ref: '#/components/parameters/idempotencyKey' }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['action', 'expectedVersion'], properties: { action: { type: 'string', enum: ['ASSIGN_ADJUSTER', 'ADD_EVIDENCE', 'SET_RESERVE', 'SUBMIT_FOR_REVIEW', 'ADJUDICATE', 'FILE_APPEAL', 'RESOLVE_APPEAL', 'AUTHORIZE_PAYMENT', 'RECORD_PAYMENT', 'OPEN_SUBROGATION', 'RECORD_RECOVERY', 'CLOSE_CLAIM'] }, expectedVersion: { type: 'integer', minimum: 1 } } } } } },
+        responses: { 200: { description: 'Current governed claim' }, 403: errorResponse, 409: errorResponse, 422: errorResponse, 502: errorResponse, 503: errorResponse },
       },
     },
-    '/api/reports/dashboard': {
-      get: {
-        tags: ['Reports'],
-        summary: 'Enhanced dashboard metrics with AI stats',
-        responses: { 200: { description: 'Dashboard metrics including high-risk claims count' } },
-      },
-    },
-    '/api/reports/performance': {
-      get: {
-        tags: ['Reports'],
-        summary: 'Agent performance metrics',
-        responses: { 200: { description: 'Agent performance data' } },
-      },
-    },
-    '/api/reports/export': {
-      get: {
-        tags: ['Reports'],
-        summary: 'Export claims data as CSV or JSON',
-        parameters: [
-          { name: 'format', in: 'query', schema: { type: 'string', enum: ['csv', 'json'], default: 'json' } },
-          { name: 'startDate', in: 'query', schema: { type: 'string', format: 'date' } },
-          { name: 'endDate', in: 'query', schema: { type: 'string', format: 'date' } },
-        ],
-        responses: { 200: { description: 'Exported data' } },
-      },
-    },
-    '/api/health': {
-      get: {
-        tags: ['Health'],
-        summary: 'Basic health check (public)',
-        security: [],
-        responses: {
-          200: { description: 'All services healthy' },
-          503: { description: 'One or more services unhealthy' },
-        },
-      },
-    },
-    '/api/health/detailed': {
-      get: {
-        tags: ['Health'],
-        summary: 'Detailed health check (admin only)',
-        responses: { 200: { description: 'Detailed system information' } },
-      },
-    },
-    '/api/dashboard/stats': {
-      get: {
-        tags: ['Dashboard'],
-        summary: 'Dashboard statistics including AI metrics',
-        responses: { 200: { description: 'Dashboard stats with aiMetrics' } },
-      },
-    },
+    '/api/health': { get: { security: [], summary: 'Liveness and database check', responses: { 200: { description: 'Healthy' }, 503: { description: 'Unavailable' } } } },
   },
 };

@@ -1,9 +1,11 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
+import { requiredSecret } from './claims-runtime-config';
+import prisma from './prisma';
 
-const CUSTOMER_JWT_SECRET = new TextEncoder().encode(
-  process.env.CUSTOMER_JWT_SECRET || 'customer-portal-secret-key-change-in-production'
-);
+function customerJwtSecret() {
+  return new TextEncoder().encode(requiredSecret('CUSTOMER_JWT_SECRET'));
+}
 
 const COOKIE_NAME = 'customer-token';
 
@@ -16,29 +18,53 @@ export interface CustomerTokenPayload {
 export async function createCustomerToken(payload: CustomerTokenPayload): Promise<string> {
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: 'HS256' })
+    .setIssuer('insureflow-customer-portal')
+    .setAudience('insureflow-customer-api')
     .setIssuedAt()
     .setExpirationTime('24h')
-    .sign(CUSTOMER_JWT_SECRET);
+    .sign(customerJwtSecret());
 }
 
 export async function verifyCustomerToken(token: string): Promise<CustomerTokenPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, CUSTOMER_JWT_SECRET);
-    return payload as unknown as CustomerTokenPayload;
+    const { payload } = await jwtVerify(token, customerJwtSecret(), {
+      issuer: 'insureflow-customer-portal',
+      audience: 'insureflow-customer-api',
+    });
+    if (typeof payload.sub !== 'string' || typeof payload.clientId !== 'string' || typeof payload.email !== 'string') {
+      return null;
+    }
+    const current = await prisma.customerAuth.findFirst({
+      where: {
+        id: payload.sub,
+        clientId: payload.clientId,
+        email: payload.email,
+        isActive: true,
+      },
+      select: { id: true },
+    });
+    if (!current) return null;
+    return { sub: payload.sub, clientId: payload.clientId, email: payload.email };
   } catch {
     return null;
   }
 }
 
+export async function getCustomerFromAuthorizationHeader(value: string | null): Promise<CustomerTokenPayload | null> {
+  if (!value?.startsWith('Bearer ')) return null;
+  const token = value.slice('Bearer '.length).trim();
+  return token ? verifyCustomerToken(token) : null;
+}
+
 export async function getCustomerFromCookie(): Promise<CustomerTokenPayload | null> {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!token) return null;
   return verifyCustomerToken(token);
 }
 
-export function setCustomerCookie(token: string) {
-  cookies().set(COOKIE_NAME, token, {
+export async function setCustomerCookie(token: string) {
+  (await cookies()).set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -47,8 +73,8 @@ export function setCustomerCookie(token: string) {
   });
 }
 
-export function clearCustomerCookie() {
-  cookies().set(COOKIE_NAME, '', {
+export async function clearCustomerCookie() {
+  (await cookies()).set(COOKIE_NAME, '', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',

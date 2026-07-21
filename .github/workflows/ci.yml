@@ -1,0 +1,55 @@
+name: governed-claims-ci
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: insurance_agency_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d insurance_agency_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/insurance_agency_test
+      NEXTAUTH_URL: http://localhost:3000
+      CORS_ALLOWED_ORIGIN: https://agency.example.test
+      CLAIMS_EVIDENCE_ALLOWED_HOSTS: evidence.example.test
+      CLAIMS_FRAUD_ENDPOINT: https://fraud.example.test/v1/screen
+      CLAIMS_PAYMENT_ENDPOINT: https://payments.example.test/v1/authorize
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Generate ephemeral test secrets
+        run: |
+          echo "NEXTAUTH_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CUSTOMER_JWT_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "CLAIMS_INTEGRATION_TOKEN=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+      - run: npm ci
+      - run: npx prisma generate
+      - name: Apply and repeat migrations
+        run: |
+          npx prisma migrate deploy
+          npx prisma migrate deploy
+          ./scripts/verify-claim-controls.sh
+      - run: npm test
+      - run: npm run build
+      - run: npm audit --omit=dev --audit-level=low
+      - run: docker build -t insureflow-governed:${{ github.sha }} .
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2

@@ -22,14 +22,29 @@ export async function GET() {
       value: p._count.id,
     }));
 
-    // Generate mock premium trend data (in production, aggregate from actual data)
+    const now = new Date();
+    const yearStart = new Date(now.getFullYear(), 0, 1);
+    const yearEnd = new Date(now.getFullYear() + 1, 0, 1);
+    const policyRows = await prisma.policy.findMany({
+      where: {
+        OR: [
+          { effectiveDate: { gte: yearStart, lt: yearEnd } },
+          { createdAt: { gte: yearStart, lt: yearEnd } },
+        ],
+      },
+      select: { premium: true, effectiveDate: true, createdAt: true },
+    });
+
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const currentMonth = new Date().getMonth();
-    const premiumTrend = months.slice(0, currentMonth + 1).map((month, index) => ({
-      month,
-      premium: 50000 + Math.random() * 30000,
-      newBusiness: 10000 + Math.random() * 15000,
-    }));
+    const premiumTrend = months.slice(0, now.getMonth() + 1).map((month, index) => {
+      const premium = policyRows
+        .filter((policy) => policy.effectiveDate.getFullYear() === now.getFullYear() && policy.effectiveDate.getMonth() === index)
+        .reduce((sum, policy) => sum + Number(policy.premium), 0);
+      const newBusiness = policyRows
+        .filter((policy) => policy.createdAt.getFullYear() === now.getFullYear() && policy.createdAt.getMonth() === index)
+        .reduce((sum, policy) => sum + Number(policy.premium), 0);
+      return { month, premium, newBusiness };
+    });
 
     return NextResponse.json({
       policyDistribution,

@@ -512,7 +512,7 @@ export default function Sidebar() {
           Settings
         </MenuItem>
         <Divider />
-        <MenuItem onClick={() => { handleUserMenuClose(); signOut({ callbackUrl: '/auto-login' }); }}>
+        <MenuItem onClick={() => { handleUserMenuClose(); signOut({ callbackUrl: '/login' }); }}>
           <ListItemIcon>
             <Logout fontSize="small" />
           </ListItemIcon>

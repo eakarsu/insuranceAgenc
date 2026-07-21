@@ -7,15 +7,16 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest",
+    "test": "jest --runInBand",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
+    "test:coverage": "jest --coverage --runInBand",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:seed": "tsx prisma/seed.ts",
+    "demo-data:load": "tsx prisma/seed.ts",
+    "create-admin": "tsx scripts/create-admin.ts",
     "db:studio": "prisma studio",
     "db:migrate": "prisma migrate dev",
-    "db:reset": "prisma migrate reset --force && npm run db:seed"
+    "db:reset": "prisma migrate reset --force && npm run demo-data:load"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.49",
@@ -33,17 +34,14 @@
     "@stripe/stripe-js": "^8.8.0",
     "@tanstack/react-query": "^5.28.9",
     "@types/node-cron": "^3.0.11",
-    "@types/nodemailer": "^7.0.11",
     "ai": "^6.0.104",
-    "axios": "^1.6.8",
+    "axios": "^1.16.0",
     "bcryptjs": "^2.4.3",
     "date-fns": "^2.30.0",
     "jose": "^6.1.3",
-    "next": "14.2.3",
+    "next": "15.5.20",
     "next-auth": "^4.24.7",
-    "next-swagger-doc": "^0.4.1",
     "node-cron": "^4.2.1",
-    "nodemailer": "^7.0.13",
     "puppeteer-core": "^24.37.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -72,14 +70,23 @@
     "@types/swagger-ui-react": "^5.18.0",
     "autoprefixer": "^10.4.19",
     "eslint": "^8.57.0",
-    "eslint-config-next": "14.2.3",
+    "eslint-config-next": "15.5.20",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
-    "postcss": "^8.4.38",
+    "postcss": "^8.5.10",
     "prisma": "^5.22.0",
     "tailwindcss": "^3.4.3",
     "ts-jest": "^29.4.5",
     "tsx": "^4.7.2",
     "typescript": "^5.4.5"
+  },
+  "overrides": {
+    "uuid": "11.1.1",
+    "next": {
+      "postcss": "8.5.10"
+    },
+    "next-auth": {
+      "nodemailer": "9.0.3"
+    }
   }
 }

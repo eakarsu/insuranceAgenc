@@ -20,19 +20,9 @@ function checkIntegrations(): IntegrationStatus[] {
       name: 'Database (PostgreSQL)',
       configured: Boolean(process.env.DATABASE_URL),
     },
-    {
-      name: 'OpenRouter AI',
-      configured: Boolean(process.env.OPENROUTER_API_KEY),
-      note: process.env.OPENROUTER_MODEL || 'anthropic/claude-3-haiku',
-    },
-    {
-      name: 'Anthropic Claude',
-      configured: Boolean(process.env.ANTHROPIC_API_KEY),
-    },
-    {
-      name: 'OpenAI',
-      configured: Boolean(process.env.OPENAI_API_KEY),
-    },
+    { name: 'Claims evidence hosts', configured: Boolean(process.env.CLAIMS_EVIDENCE_ALLOWED_HOSTS) },
+    { name: 'Typed fraud adapter', configured: Boolean(process.env.CLAIMS_FRAUD_ENDPOINT) && Boolean(process.env.CLAIMS_INTEGRATION_TOKEN) },
+    { name: 'Typed payment adapter', configured: Boolean(process.env.CLAIMS_PAYMENT_ENDPOINT) && Boolean(process.env.CLAIMS_INTEGRATION_TOKEN) },
     {
       name: 'Twilio Voice',
       configured:
@@ -57,8 +47,8 @@ function checkIntegrations(): IntegrationStatus[] {
       configured: Boolean(process.env.STRIPE_SECRET_KEY),
     },
     {
-      name: 'Email (SMTP)',
-      configured: Boolean(process.env.SMTP_HOST) || Boolean(process.env.EMAIL_SERVER),
+      name: 'Email delivery adapter',
+      configured: Boolean(process.env.EMAIL_DELIVERY_ENDPOINT) && Boolean(process.env.EMAIL_DELIVERY_TOKEN),
     },
     {
       name: 'NextAuth',

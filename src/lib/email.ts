@@ -1,31 +1,3 @@
-import nodemailer from 'nodemailer';
-
-const SMTP_HOST = process.env.SMTP_HOST;
-const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587');
-const SMTP_USER = process.env.SMTP_USER;
-const SMTP_PASS = process.env.SMTP_PASS;
-const SMTP_FROM = process.env.SMTP_FROM || 'noreply@insureflow.com';
-
-let transporter: nodemailer.Transporter | null = null;
-
-function getTransporter(): nodemailer.Transporter | null {
-  if (transporter) return transporter;
-
-  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
-    console.log('[Email] SMTP not configured — emails will be logged to console');
-    return null;
-  }
-
-  transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: SMTP_PORT === 465,
-    auth: { user: SMTP_USER, pass: SMTP_PASS },
-  });
-
-  return transporter;
-}
-
 export interface EmailOptions {
   to: string;
   subject: string;
@@ -34,34 +6,46 @@ export interface EmailOptions {
   from?: string;
 }
 
+function validMailbox(value: string): boolean {
+  return /^[^\s@\r\n]+@[^\s@\r\n]+\.[^\s@\r\n]+$/.test(value);
+}
+
+/** Deliver mail through the configured, authenticated provider adapter. */
 export async function sendEmail(options: EmailOptions): Promise<{ success: boolean; messageId?: string }> {
-  const smtp = getTransporter();
-  const from = options.from || SMTP_FROM;
-
-  if (!smtp) {
-    // Dev mode: log email to console
-    console.log('=== EMAIL (dev mode) ===');
-    console.log(`From: ${from}`);
-    console.log(`To: ${options.to}`);
-    console.log(`Subject: ${options.subject}`);
-    console.log(`Body: ${options.text || options.html.substring(0, 200)}...`);
-    console.log('========================');
-    return { success: true, messageId: `dev-${Date.now()}` };
-  }
-
-  try {
-    const info = await smtp.sendMail({
-      from,
-      to: options.to,
-      subject: options.subject,
-      html: options.html,
-      text: options.text,
-    });
-
-    console.log(`[Email] Sent to ${options.to}: ${info.messageId}`);
-    return { success: true, messageId: info.messageId };
-  } catch (error: any) {
-    console.error(`[Email] Failed to send to ${options.to}:`, error.message);
+  const endpointValue = process.env.EMAIL_DELIVERY_ENDPOINT;
+  const token = process.env.EMAIL_DELIVERY_TOKEN || '';
+  const from = options.from || process.env.EMAIL_FROM || '';
+  if (!endpointValue || token.length < 32 || !validMailbox(from)) {
+    console.error('[Email] Delivery adapter is not configured');
     return { success: false };
+  }
+  if (!validMailbox(options.to) || !options.subject.trim() || options.subject.length > 200 || options.html.length > 1_000_000) {
+    console.error('[Email] Message failed structural validation');
+    return { success: false };
+  }
+  let endpoint: URL;
+  try {
+    endpoint = new URL(endpointValue);
+  } catch {
+    return { success: false };
+  }
+  if (process.env.NODE_ENV === 'production' && endpoint.protocol !== 'https:') return { success: false };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8_000);
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ from, to: options.to, subject: options.subject, html: options.html, text: options.text }),
+      signal: controller.signal,
+      cache: 'no-store',
+    });
+    if (!response.ok) return { success: false };
+    const body = await response.json() as { messageId?: unknown };
+    return typeof body.messageId === 'string' ? { success: true, messageId: body.messageId } : { success: false };
+  } catch {
+    return { success: false };
+  } finally {
+    clearTimeout(timeout);
   }
 }

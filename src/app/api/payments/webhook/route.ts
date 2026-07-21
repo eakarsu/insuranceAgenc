@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import stripe, { STRIPE_WEBHOOK_SECRET } from '@/lib/stripe';
+import { getStripe, getStripeWebhookSecret } from '@/lib/stripe';
 import prisma from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
@@ -11,15 +11,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
     }
 
-    if (!STRIPE_WEBHOOK_SECRET) {
-      console.error('STRIPE_WEBHOOK_SECRET is not configured');
-      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
-    }
-
     let event;
     try {
-      event = stripe.webhooks.constructEvent(body, signature, STRIPE_WEBHOOK_SECRET);
+      event = getStripe().webhooks.constructEvent(body, signature, getStripeWebhookSecret());
     } catch (err: any) {
+      if (err.message?.includes('not configured')) return NextResponse.json({ error: 'Payment webhook is unavailable' }, { status: 503 });
       console.error('Webhook signature verification failed:', err.message);
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }

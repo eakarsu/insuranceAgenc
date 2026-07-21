@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { jwtVerify } from 'jose';
 import prisma from '@/lib/prisma';
 import { intakeComplaint } from '@/lib/complaint-service';
-
-const JWT_SECRET = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || 'fallback-secret');
+import { getCustomerFromAuthorizationHeader } from '@/lib/customer-auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '');
-    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-    const clientId = payload.clientId as string;
+    const customer = await getCustomerFromAuthorizationHeader(request.headers.get('authorization'));
+    if (!customer) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const clientId = customer.clientId;
 
     const complaints = await prisma.complaint.findMany({
       where: { clientId },
@@ -35,11 +31,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '');
-    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-    const clientId = payload.clientId as string;
+    const customer = await getCustomerFromAuthorizationHeader(request.headers.get('authorization'));
+    if (!customer) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const clientId = customer.clientId;
 
     const body = await request.json();
     const complaint = await intakeComplaint({

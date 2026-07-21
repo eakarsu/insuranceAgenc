@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { analyzeClaim } from '@/lib/ai-claims-service';
 import { invalidateCache } from '@/lib/cache';
+import { getClaimActor } from '@/lib/claims-auth';
+import { ClaimGovernanceError } from '@/lib/claims-governance-rules';
+import { intakeClaim } from '@/lib/claims-governance';
 
 export async function GET(request: NextRequest) {
   try {
@@ -56,78 +58,17 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
+    const actor = await getClaimActor();
     const body = await request.json();
-    const count = await prisma.claim.count();
-    const claimNumber = `CLM-${new Date().getFullYear()}-${String(count + 1).padStart(5, '0')}`;
-
-    // Clean and prepare data
-    const cleanData = {
-      claimNumber,
-      clientId: body.clientId,
-      policyId: body.policyId,
-      type: body.type,
-      status: 'REPORTED' as const,
-      dateOfLoss: body.dateOfLoss ? new Date(body.dateOfLoss) : new Date(),
-      description: body.description || 'No description provided',
-      lossLocation: body.lossLocation || null,
-      estimatedLoss: body.estimatedLoss ? parseFloat(body.estimatedLoss) : null,
-      agentId: session.user.id,
-    };
-
-    const claim = await prisma.claim.create({
-      data: cleanData,
-      include: { client: { select: { id: true, firstName: true, lastName: true } } },
-    });
-
-    await prisma.activity.create({
-      data: {
-        type: 'CLAIM_REPORTED',
-        title: 'Claim reported',
-        description: `Reported claim ${claimNumber}`,
-        userId: session.user.id,
-        clientId: claim.clientId,
-        claimId: claim.id,
-      },
-    });
-
-    // Invalidate report caches
+    const externalEventId = request.headers.get('idempotency-key') || body.externalEventId;
+    const result = await intakeClaim({ ...body, externalEventId }, actor);
     invalidateCache('report:*').catch(() => {});
-
-    // Fire-and-forget AI analysis to auto-populate AI fields
-    analyzeClaim({
-      type: cleanData.type,
-      description: cleanData.description,
-      estimatedLoss: cleanData.estimatedLoss,
-      dateOfLoss: cleanData.dateOfLoss.toISOString(),
-      lossLocation: cleanData.lossLocation,
-      claimNumber: cleanData.claimNumber,
-      status: 'REPORTED',
-    }).then(async (analysis) => {
-      try {
-        await prisma.claim.update({
-          where: { id: claim.id },
-          data: {
-            aiClassification: analysis.classification,
-            aiRiskScore: analysis.riskScore,
-            aiFlags: {
-              flags: analysis.flags,
-              recommendations: analysis.recommendations,
-              summary: analysis.summary,
-              analyzedAt: new Date().toISOString(),
-            },
-          },
-        });
-      } catch (e) {
-        console.error('Auto AI analysis update failed:', e);
-      }
-    }).catch((e) => console.error('Auto AI analysis failed:', e));
-
-    return NextResponse.json(claim, { status: 201 });
+    return NextResponse.json({ ...result.claim, idempotent: result.idempotent }, { status: result.idempotent ? 200 : 201 });
   } catch (error) {
     console.error('Claims POST error:', error);
+    if (error instanceof ClaimGovernanceError) {
+      return NextResponse.json({ error: error.message, code: error.code, details: error.details }, { status: error.status });
+    }
     return NextResponse.json({ error: 'Failed to create claim' }, { status: 500 });
   }
 }

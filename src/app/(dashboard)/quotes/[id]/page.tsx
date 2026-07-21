@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import {
@@ -16,7 +16,8 @@ import {
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 
-export default function QuoteDetailPage({ params }: { params: { id: string } }) {
+export default function QuoteDetailPage() {
+  const params = useParams<{ id: string }>();
   const { id } = params;
   const router = useRouter();
   const queryClient = useQueryClient();

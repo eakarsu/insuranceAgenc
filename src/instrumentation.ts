@@ -6,6 +6,10 @@
 export async function register() {
   // Only run on the server (Node.js runtime)
   if (typeof window !== 'undefined') return;
+  if (process.env.ENABLE_BACKGROUND_JOBS !== 'true') {
+    console.log('[Instrumentation] Background jobs disabled; run them only in a designated worker deployment');
+    return;
+  }
 
   try {
     // Dynamically import to avoid bundling issues

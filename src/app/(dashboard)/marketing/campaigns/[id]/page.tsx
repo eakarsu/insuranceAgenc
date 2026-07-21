@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import {
@@ -12,7 +12,8 @@ import {
 import { ArrowBack, Edit, Send, Campaign, Email, Sms, Mail, Person } from '@mui/icons-material';
 import { format } from 'date-fns';
 
-export default function CampaignDetailPage({ params }: { params: { id: string } }) {
+export default function CampaignDetailPage() {
+  const params = useParams<{ id: string }>();
   const { id } = params;
   const router = useRouter();
   const queryClient = useQueryClient();

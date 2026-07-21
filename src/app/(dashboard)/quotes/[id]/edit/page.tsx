@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useForm, Controller } from 'react-hook-form';
@@ -36,7 +36,8 @@ const statusOptions = [
   { value: 'EXPIRED', label: 'Expired' },
 ];
 
-export default function EditQuotePage({ params }: { params: { id: string } }) {
+export default function EditQuotePage() {
+  const params = useParams<{ id: string }>();
   const { id } = params;
   const router = useRouter();
   const queryClient = useQueryClient();

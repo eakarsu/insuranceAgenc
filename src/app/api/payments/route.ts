@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import stripe from '@/lib/stripe';
+import { getStripe } from '@/lib/stripe';
 
 export async function GET(request: NextRequest) {
   try {
@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const stripe = getStripe();
 
     const body = await request.json();
     const { clientId, policyId, amount, description } = body;
@@ -76,48 +77,42 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Client not found' }, { status: 404 });
     }
 
-    const isPlaceholder = !process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === 'sk_test_placeholder';
-
-    let stripeSessionId: string | null = null;
-    let checkoutUrl: string | null = null;
-
-    if (!isPlaceholder) {
-      const stripeSession = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        line_items: [
-          {
-            price_data: {
-              currency: 'usd',
-              product_data: {
-                name: description || `Insurance Payment - ${client.firstName} ${client.lastName}`,
-              },
-              unit_amount: Math.round(Number(amount) * 100),
-            },
-            quantity: 1,
-          },
-        ],
-        mode: 'payment',
-        success_url: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/payments/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/payments`,
-        metadata: {
-          clientId,
-          policyId: policyId || '',
-        },
-      });
-
-      stripeSessionId = stripeSession.id;
-      checkoutUrl = stripeSession.url;
-    } else {
-      stripeSessionId = `mock_sess_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const normalizedAmount = Number(amount);
+    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0 || normalizedAmount > 1_000_000_000) {
+      return NextResponse.json({ error: 'amount must be a positive supported monetary value' }, { status: 422 });
     }
+    const stripeSession = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: description || `Insurance Payment - ${client.firstName} ${client.lastName}`,
+            },
+            unit_amount: Math.round(normalizedAmount * 100),
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: `${process.env.NEXTAUTH_URL}/payments/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXTAUTH_URL}/payments`,
+      metadata: {
+        clientId,
+        policyId: policyId || '',
+      },
+    });
+
+    if (!stripeSession.url) throw new Error('Stripe did not return a checkout URL');
 
     const payment = await prisma.payment.create({
       data: {
-        amount: Number(amount),
+        amount: normalizedAmount,
         currency: 'usd',
         description: description || null,
         status: 'PENDING',
-        stripeSessionId,
+        stripeSessionId: stripeSession.id,
         clientId,
         policyId: policyId || null,
         metadata: { createdBy: session.user.id },
@@ -128,7 +123,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ payment, checkoutUrl }, { status: 201 });
+    return NextResponse.json({ payment, checkoutUrl: stripeSession.url }, { status: 201 });
   } catch (error) {
     console.error('Payments POST error:', error);
     return NextResponse.json({ error: 'Failed to create payment' }, { status: 500 });

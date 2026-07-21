@@ -38,6 +38,7 @@ export default function CustomerClaimsPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [intakeEventId, setIntakeEventId] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
   // New claim form state
@@ -47,13 +48,14 @@ export default function CustomerClaimsPage() {
     dateOfLoss: '',
     description: '',
     lossLocation: '',
+    jurisdiction: '',
   });
 
   const { data: claims = [], isLoading } = useQuery<Claim[]>({
     queryKey: ['customerClaims'],
     queryFn: async () => {
       const response = await axios.get('/api/customer/claims');
-      return response.data;
+      return response.data.claims;
     },
   });
 
@@ -61,20 +63,21 @@ export default function CustomerClaimsPage() {
     queryKey: ['customerPolicies'],
     queryFn: async () => {
       const response = await axios.get('/api/customer/policies');
-      return response.data;
+      return response.data.policies;
     },
   });
 
   const createClaimMutation = useMutation({
     mutationFn: async (data: typeof newClaim) => {
-      const response = await axios.post('/api/customer/claims', data);
+      const response = await axios.post('/api/customer/claims', data, { headers: { 'Idempotency-Key': intakeEventId } });
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customerClaims'] });
       setSnackbar({ open: true, message: 'Claim filed successfully', severity: 'success' });
       setDialogOpen(false);
-      setNewClaim({ policyId: '', type: '', dateOfLoss: '', description: '', lossLocation: '' });
+      setNewClaim({ policyId: '', type: '', dateOfLoss: '', description: '', lossLocation: '', jurisdiction: '' });
+      setIntakeEventId('');
     },
     onError: (err: any) => {
       const message = err.response?.data?.error || 'Failed to file claim. Please try again.';
@@ -170,7 +173,7 @@ export default function CustomerClaimsPage() {
   ];
 
   const handleSubmitClaim = () => {
-    if (!newClaim.policyId || !newClaim.type || !newClaim.dateOfLoss || !newClaim.description) {
+    if (!intakeEventId || !newClaim.policyId || !newClaim.type || !newClaim.dateOfLoss || !newClaim.description || !newClaim.jurisdiction) {
       setSnackbar({ open: true, message: 'Please fill in all required fields', severity: 'error' });
       return;
     }
@@ -203,7 +206,10 @@ export default function CustomerClaimsPage() {
           <Button
             variant="contained"
             startIcon={<Add />}
-            onClick={() => setDialogOpen(true)}
+            onClick={() => {
+              setIntakeEventId(globalThis.crypto.randomUUID());
+              setDialogOpen(true);
+            }}
             sx={{
               borderRadius: 2,
               fontWeight: 600,
@@ -329,6 +335,18 @@ export default function CustomerClaimsPage() {
                 value={newClaim.dateOfLoss}
                 onChange={(e) => setNewClaim({ ...newClaim, dateOfLoss: e.target.value })}
                 InputLabelProps={{ shrink: true }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                required
+                label="Loss State / Jurisdiction"
+                value={newClaim.jurisdiction}
+                onChange={(e) => setNewClaim({ ...newClaim, jurisdiction: e.target.value.toUpperCase().slice(0, 2) })}
+                inputProps={{ minLength: 2, maxLength: 2, pattern: '[A-Za-z]{2}' }}
+                helperText="Two-letter state code"
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
             </Grid>
