@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",
     "test": "jest --runInBand",
@@ -26,6 +26,7 @@
     "@hookform/resolvers": "^3.3.4",
     "@mui/icons-material": "^5.15.15",
     "@mui/material": "^5.15.15",
+    "@mui/system": "^5.18.0",
     "@mui/x-data-grid": "^7.3.0",
     "@mui/x-date-pickers": "^7.3.1",
     "@prisma/client": "^5.22.0",
@@ -39,8 +40,8 @@
     "bcryptjs": "^2.4.3",
     "date-fns": "^2.30.0",
     "jose": "^6.1.3",
-    "next": "15.5.20",
-    "next-auth": "^4.24.7",
+    "next": "16.2.11",
+    "next-auth": "^4.24.15",
     "node-cron": "^4.2.1",
     "puppeteer-core": "^24.37.5",
     "react": "^18.2.0",
@@ -48,7 +49,7 @@
     "react-hook-form": "^7.51.3",
     "recharts": "^2.12.6",
     "stripe": "^20.4.0",
-    "swagger-ui-react": "^5.31.2",
+    "swagger-ui-react": "^5.32.11",
     "twilio": "^5.10.6",
     "zod": "^3.22.5",
     "zustand": "^4.5.2"
@@ -69,11 +70,11 @@
     "@types/react-dom": "^18.2.25",
     "@types/swagger-ui-react": "^5.18.0",
     "autoprefixer": "^10.4.19",
-    "eslint": "^8.57.0",
-    "eslint-config-next": "15.5.20",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "16.2.11",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
-    "postcss": "^8.5.10",
+    "postcss": "^8.5.12",
     "prisma": "^5.22.0",
     "tailwindcss": "^3.4.3",
     "ts-jest": "^29.4.5",
@@ -83,10 +84,13 @@
   "overrides": {
     "uuid": "11.1.1",
     "next": {
-      "postcss": "8.5.10"
+      "postcss": "8.5.12"
     },
     "next-auth": {
       "nodemailer": "9.0.3"
-    }
+    },
+    "sharp": "0.35.0",
+    "immutable": "5.1.9",
+    "js-yaml": "4.3.0"
   }
 }

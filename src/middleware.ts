@@ -48,10 +48,13 @@ function checkRateLimit(ip: string, path: string): { allowed: boolean; remaining
 
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const isGovernedOperationalReadiness = pathname === '/api/ai/claim-operational-readiness';
   if (
-    pathname.startsWith('/api/gap-') ||
-    pathname === '/api/ai' || pathname.startsWith('/api/ai/') ||
-    /^\/api\/claims\/[^/]+\/(?:ai-analysis|fraud-check)$/.test(pathname)
+    !isGovernedOperationalReadiness && (
+      pathname.startsWith('/api/gap-') ||
+      pathname === '/api/ai' || pathname.startsWith('/api/ai/') ||
+      /^\/api\/claims\/[^/]+\/(?:ai-analysis|fraud-check)$/.test(pathname)
+    )
   ) {
     return NextResponse.json(
       { error: 'Generated gap and ungrounded AI behavior is retired; use a typed governed workflow', code: 'RETIRED_UNGROUNDED_BEHAVIOR' },
