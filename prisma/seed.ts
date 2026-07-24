@@ -5,6 +5,12 @@ import path from 'path';
 
 const prisma = new PrismaClient();
 
+function requireDemoPassword() {
+  const password = process.env.DEMO_PASSWORD || process.env.SEED_DEMO_PASSWORD || process.env.DEMO_SEED_PASSWORD || '';
+  if (password.length < 12 || password.length > 1024) throw new Error('DEMO_PASSWORD must contain 12-1024 characters');
+  return password;
+}
+
 async function main() {
   console.log('Starting comprehensive seed...');
 
@@ -16,7 +22,7 @@ async function main() {
   }
 
   // ==================== USERS (6) ====================
-  const password = await bcrypt.hash('password123', 10);
+  const password = await bcrypt.hash(requireDemoPassword(), 10);
 
   const admin = await prisma.user.upsert({
     where: { email: 'admin@insureflow.com' },
