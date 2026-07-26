@@ -131,6 +131,7 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 if [[ "${NODE_ENV:-development}" != production ]]; then
+  npx --no-install tsx scripts/create-admin.ts
   npm run dev -- -H 127.0.0.1 -p "$ui_port" &
 elif [ "${STANDALONE:-0}" = "1" ]; then
   node server.js &
