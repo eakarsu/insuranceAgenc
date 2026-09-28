@@ -11,6 +11,24 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
+
+  async function fillDemoCredentials() {
+    setError('');
+    setDemoLoading(true);
+    try {
+      const response = await fetch('/api/auth/demo-credentials', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Demo credentials unavailable');
+      const credentials = await response.json() as { email?: string; password?: string };
+      if (!credentials.email || !credentials.password) throw new Error('Demo credentials unavailable');
+      setEmail(credentials.email);
+      setPassword(credentials.password);
+    } catch {
+      setError('Demo credentials are unavailable.');
+    } finally {
+      setDemoLoading(false);
+    }
+  }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -37,14 +55,14 @@ export default function LoginPage() {
             <TextField label="Password" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} />
             <button
               type="button"
-              onClick={() => { setEmail(process.env.NEXT_PUBLIC_DEMO_EMAIL || ''); setPassword(process.env.NEXT_PUBLIC_DEMO_PASSWORD || ''); }}
-              disabled={!process.env.NEXT_PUBLIC_DEMO_EMAIL || !process.env.NEXT_PUBLIC_DEMO_PASSWORD}
+              onClick={fillDemoCredentials}
+              disabled={demoLoading || submitting}
               aria-label="Auto Fill Demo Credentials"
               style={{ width: '100%', marginBottom: '12px', padding: '10px 14px', borderRadius: '8px', border: '1px solid currentColor', background: 'transparent', cursor: 'pointer' }}
             >
-              Auto Fill Demo Credentials
+              {demoLoading ? 'Loading Demo Credentials…' : 'Auto Fill Demo Credentials'}
             </button>
-            <Button type="submit" variant="contained" size="large" disabled={submitting}>{submitting ? 'Signing in…' : 'Sign in'}</Button>
+            <Button type="submit" variant="contained" size="large" disabled={submitting}>{submitting ? 'Signing in…' : 'Sign In'}</Button>
           </Box>
         </CardContent>
       </Card>
