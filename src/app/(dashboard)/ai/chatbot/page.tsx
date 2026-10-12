@@ -1,4 +1,6 @@
 'use client';
+import FullAIExamples, { useFullAIExamples } from "../../../../components/FullAIExamples";
+
 
 import { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -23,6 +25,8 @@ const quickPrompts = [
 ];
 
 export default function ChatbotPage() {
+  const fullAIExamples = useFullAIExamples();
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -125,7 +129,7 @@ export default function ChatbotPage() {
   };
 
   return (
-    <Box className="animate-fade-in">
+    <Box className="animate-fade-in"><div data-full-ai-workspace="ChatbotPage"><FullAIExamples controller={fullAIExamples} disabled={Boolean(isLoading)} />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <SmartToy sx={{ fontSize: 32, color: 'primary.main' }} />
         <Box>
@@ -146,7 +150,7 @@ export default function ChatbotPage() {
 
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel>Context Type</InputLabel>
-                <Select value={contextType} label="Context Type" onChange={(e) => { setContextType(e.target.value); setContextId(''); }}>
+                <Select value={contextType} label="Context Type" onChange={(e) => { setContextType(e.target.value); setContextId(''); }} data-full-ai-field={fullAIExamples.bind({ current: contextType, change: (e) => { setContextType(e.target.value); setContextId(''); }, label: "contextType", manual: false, json: false, sample: '' }, "p1-4922", undefined)}>
                   <MenuItem value="">None</MenuItem>
                   <MenuItem value="client">Client</MenuItem>
                   <MenuItem value="policy">Policy</MenuItem>
@@ -292,7 +296,7 @@ export default function ChatbotPage() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyPress}
-                  size="small"
+                  size="small" data-full-ai-field={fullAIExamples.bind({ current: input, change: (e) => setInput(e.target.value), label: "input", manual: false, json: false, sample: '' }, "p1-12050", undefined)}
                 />
                 <IconButton
                   color="primary"
@@ -307,6 +311,6 @@ export default function ChatbotPage() {
           </Card>
         </Grid>
       </Grid>
-    </Box>
+    </div></Box>
   );
 }

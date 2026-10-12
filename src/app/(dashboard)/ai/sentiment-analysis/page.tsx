@@ -1,4 +1,6 @@
 'use client';
+import FullAIExamples, { useFullAIExamples } from "../../../../components/FullAIExamples";
+
 
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
@@ -14,6 +16,8 @@ import { safeText } from '@/lib/ai-render-utils';
 const communicationTypes = ['Email', 'Phone Note', 'Chat', 'Complaint'];
 
 export default function SentimentAnalysisPage() {
+  const fullAIExamples = useFullAIExamples();
+
   const [text, setText] = useState('');
   const [commType, setCommType] = useState('Email');
   const [result, setResult] = useState<any>(null);
@@ -56,7 +60,7 @@ export default function SentimentAnalysisPage() {
   };
 
   return (
-    <Box className="animate-fade-in">
+    <Box className="animate-fade-in"><div data-full-ai-workspace="SentimentAnalysisPage"><FullAIExamples controller={fullAIExamples} />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <SentimentSatisfied sx={{ fontSize: 32, color: 'info.main' }} />
         <Box>
@@ -73,7 +77,7 @@ export default function SentimentAnalysisPage() {
 
               <FormControl fullWidth sx={{ mb: 3 }}>
                 <InputLabel>Communication Type</InputLabel>
-                <Select value={commType} label="Communication Type" onChange={(e) => setCommType(e.target.value)}>
+                <Select value={commType} label="Communication Type" onChange={(e) => setCommType(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: commType, change: (e) => setCommType(e.target.value), label: "commType", manual: false, json: false, sample: 'Email' }, "p1-2832", undefined)}>
                   {communicationTypes.map((type) => (
                     <MenuItem key={type} value={type}>{type}</MenuItem>
                   ))}
@@ -88,7 +92,7 @@ export default function SentimentAnalysisPage() {
                 placeholder="Paste the email, chat message, phone note, or complaint text here..."
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                sx={{ mb: 3 }}
+                sx={{ mb: 3 }} data-full-ai-field={fullAIExamples.bind({ current: text, change: (e) => setText(e.target.value), label: "text", manual: false, json: false, sample: '' }, "p1-3149", undefined)}
               />
 
               {/* Sample Test Data */}
@@ -289,6 +293,6 @@ export default function SentimentAnalysisPage() {
           </Card>
         </Grid>
       </Grid>
-    </Box>
+    </div></Box>
   );
 }

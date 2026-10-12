@@ -30,7 +30,7 @@ export default function SettlementsPage() {
     },
   });
 
-  const settlements = data?.settlements || [];
+  const settlements = Array.isArray(data?.settlements) ? data.settlements : [];
   const stats = data?.stats || { total: 0, paid: 0, pending: 0 };
 
   const getStatusColor = (status: string) => {
@@ -221,6 +221,7 @@ export default function SettlementsPage() {
       {/* Data Grid */}
       <Card sx={{ borderRadius: 2.5, overflow: 'hidden' }}>
         <DataGrid
+          initialState={{ pagination: { paginationModel: { page: 0, pageSize: 25 } } }}
           rows={settlements}
           columns={columns}
           loading={isLoading}

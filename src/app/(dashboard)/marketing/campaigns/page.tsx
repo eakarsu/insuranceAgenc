@@ -23,7 +23,7 @@ export default function CampaignsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(25);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -43,7 +43,7 @@ export default function CampaignsPage() {
     },
   });
 
-  const campaigns = data?.campaigns || [];
+  const campaigns = Array.isArray(data?.campaigns) ? data.campaigns : [];
   const totalCount = data?.pagination?.total || 0;
 
   const stats = useMemo(() => {

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import AIResponseReport from '../AIResponseReport';
 import {
   Box, Typography, Paper, List, ListItem, ListItemIcon, ListItemText,
   Divider, Chip, Alert,
@@ -97,6 +98,9 @@ function getSectionIcon(content: string) {
 }
 
 export default function AIResponseFormatter({ text, variant = 'default' }: AIResponseFormatterProps) {
+  if (/^\s*(?:```json\s*)?[\[{]/.test(text)) {
+    try { JSON.parse(text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')); return <AIResponseReport value={text} title="AI analysis" />; } catch { /* Keep the text view for malformed JSON. */ }
+  }
   const sections = parseAIResponse(text);
 
   if (sections.length === 0) {

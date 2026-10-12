@@ -1,4 +1,6 @@
 'use client';
+import FullAIExamples, { useFullAIExamples } from "../../../../components/FullAIExamples";
+
 
 /**
  * AI Suite — UI for the five new AI features:
@@ -53,6 +55,8 @@ export default function AISuitePage() {
 
 // -------- UW Narrator
 function UWNarratorTab() {
+  const fullAIExamples = useFullAIExamples();
+
   const [refType, setRefType] = useState<'Policy' | 'Quote'>('Policy');
   const [refId, setRefId] = useState('');
   const [decision, setDecision] = useState('BIND');
@@ -67,15 +71,15 @@ function UWNarratorTab() {
   });
 
   return (
-    <Card>
+    <Card><div data-full-ai-workspace="UWNarratorTab"><FullAIExamples controller={fullAIExamples} />
       <CardContent>
         <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-          <TextField select size="small" label="Ref Type" value={refType} onChange={(e) => setRefType(e.target.value as any)}>
+          <TextField select size="small" label="Ref Type" value={refType} onChange={(e) => setRefType(e.target.value as any)} data-full-ai-field={fullAIExamples.bind({ current: refType, change: (e) => setRefType(e.target.value as any), label: "refType", manual: false, json: false, sample: 'Policy' }, "p1-2898", undefined)}>
             <MenuItem value="Policy">Policy</MenuItem>
             <MenuItem value="Quote">Quote</MenuItem>
           </TextField>
-          <TextField size="small" label="Ref ID" value={refId} onChange={(e) => setRefId(e.target.value)} sx={{ flex: 1 }} />
-          <TextField select size="small" label="Decision" value={decision} onChange={(e) => setDecision(e.target.value)}>
+          <TextField size="small" label="Ref ID" value={refId} onChange={(e) => setRefId(e.target.value)} sx={{ flex: 1 }} data-full-ai-field={fullAIExamples.bind({ current: refId, change: (e) => setRefId(e.target.value), label: "refId", manual: false, json: false, sample: '' }, "p1-3156", undefined)} />
+          <TextField select size="small" label="Decision" value={decision} onChange={(e) => setDecision(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: decision, change: (e) => setDecision(e.target.value), label: "decision", manual: false, json: false, sample: 'BIND' }, "p1-3282", undefined)}>
             <MenuItem value="BIND">BIND</MenuItem>
             <MenuItem value="DECLINE">DECLINE</MenuItem>
             <MenuItem value="REFER">REFER</MenuItem>
@@ -106,12 +110,14 @@ function UWNarratorTab() {
           </Stack>
         )}
       </CardContent>
-    </Card>
+    </div></Card>
   );
 }
 
 // -------- Loss-Run Analyzer
 function LossRunTab() {
+  const fullAIExamples = useFullAIExamples();
+
   const [fileName, setFileName] = useState('');
   const [text, setText] = useState('');
   const [quoteId, setQuoteId] = useState('');
@@ -126,12 +132,12 @@ function LossRunTab() {
   });
 
   return (
-    <Card>
+    <Card><div data-full-ai-workspace="LossRunTab"><FullAIExamples controller={fullAIExamples} />
       <CardContent>
         <Stack spacing={1} sx={{ mb: 2 }}>
-          <TextField size="small" label="File name" value={fileName} onChange={(e) => setFileName(e.target.value)} />
-          <TextField size="small" label="Quote ID (optional)" value={quoteId} onChange={(e) => setQuoteId(e.target.value)} />
-          <TextField size="small" label="Pasted loss-run text" multiline minRows={4} value={text} onChange={(e) => setText(e.target.value)} />
+          <TextField size="small" label="File name" value={fileName} onChange={(e) => setFileName(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: fileName, change: (e) => setFileName(e.target.value), label: "fileName", manual: false, json: false, sample: '' }, "p1-5634", undefined)} />
+          <TextField size="small" label="Quote ID (optional)" value={quoteId} onChange={(e) => setQuoteId(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: quoteId, change: (e) => setQuoteId(e.target.value), label: "quoteId", manual: false, json: false, sample: '' }, "p1-5752", undefined)} />
+          <TextField size="small" label="Pasted loss-run text" multiline minRows={4} value={text} onChange={(e) => setText(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: text, change: (e) => setText(e.target.value), label: "text", manual: false, json: false, sample: '' }, "p1-5878", undefined)} />
           <Button variant="contained" onClick={() => run.mutate()} disabled={!fileName || !text || run.isPending}>
             {run.isPending ? <CircularProgress size={20} /> : 'Analyze'}
           </Button>
@@ -157,12 +163,14 @@ function LossRunTab() {
           </Stack>
         )}
       </CardContent>
-    </Card>
+    </div></Card>
   );
 }
 
 // -------- Renewal Outreach
 function RenewalTab() {
+  const fullAIExamples = useFullAIExamples();
+
   const [days, setDays] = useState(90);
   const [page, setPage] = useState(1);
   const list = useQuery({
@@ -174,10 +182,10 @@ function RenewalTab() {
     onSuccess: () => list.refetch(),
   });
   return (
-    <Card>
+    <Card><div data-full-ai-workspace="RenewalTab"><FullAIExamples controller={fullAIExamples} />
       <CardContent>
         <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-          <TextField size="small" type="number" label="Lookahead (days)" value={days} onChange={(e) => setDays(Number(e.target.value))} />
+          <TextField size="small" type="number" label="Lookahead (days)" value={days} onChange={(e) => setDays(Number(e.target.value))} data-full-ai-field={fullAIExamples.bind({ current: days, change: (e) => setDays(Number(e.target.value)), label: "days", manual: false, json: false, sample: 90 }, "p1-7809", undefined)} />
           <Button variant="contained" startIcon={<Refresh />} onClick={() => run.mutate()} disabled={run.isPending}>
             {run.isPending ? <CircularProgress size={20} /> : 'Score upcoming renewals'}
           </Button>
@@ -205,12 +213,14 @@ function RenewalTab() {
           </Stack>
         )}
       </CardContent>
-    </Card>
+    </div></Card>
   );
 }
 
 // -------- Compliance-as-you-type
 function ComplianceTab() {
+  const fullAIExamples = useFullAIExamples();
+
   const [refType, setRefType] = useState('Policy');
   const [state, setState] = useState('TX');
   const [payload, setPayload] = useState('{"lineOfBusiness":"HOMEOWNERS","limits":{"dwelling":250000}}');
@@ -220,15 +230,15 @@ function ComplianceTab() {
     onSuccess: (r) => setResult(r.data),
   });
   return (
-    <Card>
+    <Card><div data-full-ai-workspace="ComplianceTab"><FullAIExamples controller={fullAIExamples} />
       <CardContent>
         <Stack spacing={1} sx={{ mb: 2 }}>
-          <TextField select size="small" label="Ref Type" value={refType} onChange={(e) => setRefType(e.target.value)}>
+          <TextField select size="small" label="Ref Type" value={refType} onChange={(e) => setRefType(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: refType, change: (e) => setRefType(e.target.value), label: "refType", manual: false, json: false, sample: 'Policy' }, "p1-9957", undefined)}>
             <MenuItem value="Policy">Policy</MenuItem>
             <MenuItem value="Endorsement">Endorsement</MenuItem>
           </TextField>
-          <TextField size="small" label="State" value={state} onChange={(e) => setState(e.target.value)} />
-          <TextField size="small" label="Payload (JSON)" multiline minRows={4} value={payload} onChange={(e) => setPayload(e.target.value)} />
+          <TextField size="small" label="State" value={state} onChange={(e) => setState(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: state, change: (e) => setState(e.target.value), label: "state", manual: false, json: false, sample: 'TX' }, "p1-10220", undefined)} />
+          <TextField size="small" label="Payload (JSON)" multiline minRows={4} value={payload} onChange={(e) => setPayload(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: payload, change: (e) => setPayload(e.target.value), label: "payload", manual: false, json: true, sample: '{"lineOfBusiness":"HOMEOWNERS","limits":{"dwelling":250000}}' }, "p1-10328", undefined)} />
           <Button variant="contained" onClick={() => run.mutate()} disabled={run.isPending}>
             {run.isPending ? <CircularProgress size={20} /> : 'Run compliance check'}
           </Button>
@@ -242,12 +252,14 @@ function ComplianceTab() {
           </Alert>
         )}
       </CardContent>
-    </Card>
+    </div></Card>
   );
 }
 
 // -------- FNOL extractor
 function FNOLTab() {
+  const fullAIExamples = useFullAIExamples();
+
   const [utterance, setUtterance] = useState('');
   const [callerPhone, setCallerPhone] = useState('');
   const [last, setLast] = useState<any>(null);
@@ -267,11 +279,11 @@ function FNOLTab() {
     },
   });
   return (
-    <Card>
+    <Card><div data-full-ai-workspace="FNOLTab"><FullAIExamples controller={fullAIExamples} />
       <CardContent>
         <Stack spacing={1} sx={{ mb: 2 }}>
-          <TextField size="small" label="Caller phone" value={callerPhone} onChange={(e) => setCallerPhone(e.target.value)} />
-          <TextField size="small" label="Caller utterance" multiline minRows={3} value={utterance} onChange={(e) => setUtterance(e.target.value)} />
+          <TextField size="small" label="Caller phone" value={callerPhone} onChange={(e) => setCallerPhone(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: callerPhone, change: (e) => setCallerPhone(e.target.value), label: "callerPhone", manual: false, json: false, sample: '' }, "p1-11904", undefined)} />
+          <TextField size="small" label="Caller utterance" multiline minRows={3} value={utterance} onChange={(e) => setUtterance(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: utterance, change: (e) => setUtterance(e.target.value), label: "utterance", manual: false, json: false, sample: '' }, "p1-12031", undefined)} />
           <Button variant="contained" onClick={() => run.mutate()} disabled={!utterance || run.isPending}>
             {run.isPending ? <CircularProgress size={20} /> : 'Extract FNOL fields'}
           </Button>
@@ -299,6 +311,6 @@ function FNOLTab() {
           </Stack>
         )}
       </CardContent>
-    </Card>
+    </div></Card>
   );
 }

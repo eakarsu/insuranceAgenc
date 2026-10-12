@@ -25,7 +25,7 @@ export default function QuotesPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [lobFilter, setLobFilter] = useState('');
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(25);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedQuote, setSelectedQuote] = useState<any>(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
@@ -81,7 +81,7 @@ export default function QuotesPage() {
     },
   });
 
-  const quotes = data?.quotes || [];
+  const quotes = Array.isArray(data?.quotes) ? data.quotes : [];
   const totalCount = data?.pagination?.total || 0;
 
   const stats = useMemo(() => {

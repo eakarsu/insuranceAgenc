@@ -57,7 +57,7 @@ export default function ContactsPage() {
     },
   });
 
-  const contacts = data?.contacts || [];
+  const contacts = Array.isArray(data?.contacts) ? data.contacts : [];
 
   const stats = useMemo(() => {
     const total = contacts.length;
@@ -243,6 +243,7 @@ export default function ContactsPage() {
       {/* Data Grid */}
       <Card sx={{ borderRadius: 2.5, overflow: 'hidden' }}>
         <DataGrid
+          initialState={{ pagination: { paginationModel: { page: 0, pageSize: 25 } } }}
           rows={contacts}
           columns={columns}
           loading={isLoading}

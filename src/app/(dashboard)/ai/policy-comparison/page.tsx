@@ -1,4 +1,6 @@
 'use client';
+import FullAIExamples, { useFullAIExamples } from "../../../../components/FullAIExamples";
+
 
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -14,6 +16,8 @@ import { safeText } from '@/lib/ai-render-utils';
 const comparisonFocusOptions = ['Coverage', 'Price', 'Overall'];
 
 export default function PolicyComparisonPage() {
+  const fullAIExamples = useFullAIExamples();
+
   const [selectedPolicies, setSelectedPolicies] = useState<any[]>([]);
   const [focus, setFocus] = useState('Overall');
   const [result, setResult] = useState<any>(null);
@@ -39,7 +43,7 @@ export default function PolicyComparisonPage() {
   });
 
   return (
-    <Box className="animate-fade-in">
+    <Box className="animate-fade-in"><div data-full-ai-workspace="PolicyComparisonPage"><FullAIExamples controller={fullAIExamples} />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <CompareArrows sx={{ fontSize: 32, color: 'info.main' }} />
         <Box>
@@ -72,7 +76,7 @@ export default function PolicyComparisonPage() {
 
               <FormControl fullWidth sx={{ mb: 3 }}>
                 <InputLabel>Comparison Focus</InputLabel>
-                <Select value={focus} label="Comparison Focus" onChange={(e) => setFocus(e.target.value)}>
+                <Select value={focus} label="Comparison Focus" onChange={(e) => setFocus(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: focus, change: (e) => setFocus(e.target.value), label: "focus", manual: false, json: false, sample: 'Overall' }, "p1-3267", undefined)}>
                   {comparisonFocusOptions.map((f) => (
                     <MenuItem key={f} value={f}>{f}</MenuItem>
                   ))}
@@ -234,6 +238,6 @@ export default function PolicyComparisonPage() {
           </Card>
         </Grid>
       </Grid>
-    </Box>
+    </div></Box>
   );
 }

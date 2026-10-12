@@ -27,7 +27,7 @@ export default function CommissionsPage() {
   const [typeFilter, setTypeFilter] = useState('');
   const [yearFilter, setYearFilter] = useState(new Date().getFullYear().toString());
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(25);
   const [selectedCommission, setSelectedCommission] = useState<any>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
@@ -52,7 +52,7 @@ export default function CommissionsPage() {
     },
   });
 
-  const commissions = data?.commissions || [];
+  const commissions = Array.isArray(data?.commissions) ? data.commissions : [];
   const totalCount = data?.pagination?.total || 0;
 
   const getStatusColor = (status: string) => {

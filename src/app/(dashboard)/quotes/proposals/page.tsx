@@ -63,7 +63,7 @@ export default function ProposalsPage() {
     },
   });
 
-  const proposals = data?.quotes || [];
+  const proposals = Array.isArray(data?.quotes) ? data.quotes : [];
 
   const stats = useMemo(() => {
     const totalProposals = proposals.length;
@@ -297,6 +297,7 @@ export default function ProposalsPage() {
       {/* Data Grid */}
       <Card sx={{ borderRadius: 2.5, overflow: 'hidden' }}>
         <DataGrid
+          initialState={{ pagination: { paginationModel: { page: 0, pageSize: 25 } } }}
           rows={proposals}
           columns={columns}
           loading={isLoading}

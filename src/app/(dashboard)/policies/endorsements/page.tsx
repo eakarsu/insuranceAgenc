@@ -50,7 +50,7 @@ export default function EndorsementsPage() {
     },
   });
 
-  const endorsements = data?.endorsements || [];
+  const endorsements = Array.isArray(data?.endorsements) ? data.endorsements : [];
 
   const stats = useMemo(() => {
     const pending = endorsements.filter((e: any) => e.status === 'PENDING').length;
@@ -289,6 +289,7 @@ export default function EndorsementsPage() {
       {/* Data Grid */}
       <Card sx={{ borderRadius: 2.5, overflow: 'hidden' }}>
         <DataGrid
+          initialState={{ pagination: { paginationModel: { page: 0, pageSize: 25 } } }}
           rows={endorsements}
           columns={columns}
           loading={isLoading}

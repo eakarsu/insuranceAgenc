@@ -21,7 +21,7 @@ export default function CommercialClientsPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(25);
   const [detailClient, setDetailClient] = useState<any>(null);
 
   const { data, isLoading } = useQuery({
@@ -32,7 +32,7 @@ export default function CommercialClientsPage() {
     },
   });
 
-  const clients = data?.clients || [];
+  const clients = Array.isArray(data?.clients) ? data.clients : [];
   const totalCount = data?.pagination?.total || 0;
 
   const stats = useMemo(() => {

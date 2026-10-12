@@ -18,7 +18,7 @@ import { format } from 'date-fns';
 export default function ComplianceChecksPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(25);
   const [runDialogOpen, setRunDialogOpen] = useState(false);
   const [selectedRuleId, setSelectedRuleId] = useState<string | null>(null);
   const [checkNotes, setCheckNotes] = useState('');
@@ -62,7 +62,7 @@ export default function ComplianceChecksPage() {
     },
   });
 
-  const checks = data?.checks || [];
+  const checks = Array.isArray(data?.checks) ? data.checks : [];
   const totalCount = data?.pagination?.total || 0;
   const rules = rulesData?.rules || [];
 

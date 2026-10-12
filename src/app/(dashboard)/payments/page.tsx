@@ -22,7 +22,7 @@ export default function PaymentsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(25);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [detailPayment, setDetailPayment] = useState<any>(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
@@ -102,7 +102,7 @@ export default function PaymentsPage() {
     setDescription('');
   };
 
-  const payments = data?.payments || [];
+  const payments = Array.isArray(data?.payments) ? data.payments : [];
   const totalCount = data?.pagination?.total || 0;
 
   const stats = useMemo(() => {

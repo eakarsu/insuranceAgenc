@@ -1,4 +1,6 @@
 'use client';
+import FullAIExamples, { useFullAIExamples } from "../../../../components/FullAIExamples";
+
 
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
@@ -29,6 +31,8 @@ const policyTypes = [
 ];
 
 export default function ComplianceCheckerPage() {
+  const fullAIExamples = useFullAIExamples();
+
   const [state, setState] = useState('');
   const [policyType, setPolicyType] = useState('');
   const [policyDetails, setPolicyDetails] = useState('');
@@ -53,7 +57,7 @@ export default function ComplianceCheckerPage() {
   };
 
   return (
-    <Box className="animate-fade-in">
+    <Box className="animate-fade-in"><div data-full-ai-workspace="ComplianceCheckerPage"><FullAIExamples controller={fullAIExamples} />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <GavelRounded sx={{ fontSize: 32, color: 'warning.main' }} />
         <Box>
@@ -70,7 +74,7 @@ export default function ComplianceCheckerPage() {
 
               <FormControl fullWidth sx={{ mb: 3 }}>
                 <InputLabel>State</InputLabel>
-                <Select value={state} label="State" onChange={(e) => setState(e.target.value)}>
+                <Select value={state} label="State" onChange={(e) => setState(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: state, change: (e) => setState(e.target.value), label: "state", manual: false, json: false, sample: '' }, "p1-3147", undefined)}>
                   {usStates.map((s) => (
                     <MenuItem key={s} value={s}>{s}</MenuItem>
                   ))}
@@ -79,7 +83,7 @@ export default function ComplianceCheckerPage() {
 
               <FormControl fullWidth sx={{ mb: 3 }}>
                 <InputLabel>Policy Type</InputLabel>
-                <Select value={policyType} label="Policy Type" onChange={(e) => setPolicyType(e.target.value)}>
+                <Select value={policyType} label="Policy Type" onChange={(e) => setPolicyType(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: policyType, change: (e) => setPolicyType(e.target.value), label: "policyType", manual: false, json: false, sample: '' }, "p1-3531", undefined)}>
                   {policyTypes.map((pt) => (
                     <MenuItem key={pt} value={pt}>{pt}</MenuItem>
                   ))}
@@ -94,7 +98,7 @@ export default function ComplianceCheckerPage() {
                 placeholder="Enter policy details, coverage limits, endorsements, or paste policy document text..."
                 value={policyDetails}
                 onChange={(e) => setPolicyDetails(e.target.value)}
-                sx={{ mb: 3 }}
+                sx={{ mb: 3 }} data-full-ai-field={fullAIExamples.bind({ current: policyDetails, change: (e) => setPolicyDetails(e.target.value), label: "policyDetails", manual: false, json: false, sample: '' }, "p1-3830", undefined)}
               />
 
               {/* Sample Test Data */}
@@ -342,6 +346,6 @@ export default function ComplianceCheckerPage() {
           </Card>
         </Grid>
       </Grid>
-    </Box>
+    </div></Box>
   );
 }

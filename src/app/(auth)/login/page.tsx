@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [demoLoading, setDemoLoading] = useState(false);
 
   async function fillDemoCredentials() {
+    if (demoLoading || submitting) return;
     setError('');
     setDemoLoading(true);
     try {
@@ -22,13 +23,9 @@ export default function LoginPage() {
       const credentials = await response.json() as { email?: string; password?: string };
       if (!credentials.email || !credentials.password) throw new Error('Demo credentials unavailable');
       setEmail(credentials.email);
-      setPassword(credentials.password)
-
-      const __demo = await signIn('credentials', { email: credentials.email, password: credentials.password, redirect: false });
-      if (__demo?.error) { setError('Invalid email or password'); return; }
-      window.location.assign('/');
+      setPassword(credentials.password);
     } catch {
-      setError('Demo credentials are unavailable.');
+      setError('Demo credentials are unavailable. Use your provisioned account.');
     } finally {
       setDemoLoading(false);
     }
@@ -37,14 +34,16 @@ export default function LoginPage() {
   async function submit(event: FormEvent) {
     event.preventDefault();
     setSubmitting(true); setError('');
-    const result = await signIn('credentials', { email, password, redirect: false });
-    if (result?.error) {
-      setError('Invalid email or password.');
+    try {
+      const result = await signIn('credentials', { email, password, redirect: false });
+      if (result?.error) { setError('Invalid email or password.'); return; }
+      router.replace('/dashboard');
+      router.refresh();
+    } catch {
+      setError('Unable to sign in. Check your connection and try again.');
+    } finally {
       setSubmitting(false);
-      return;
     }
-    router.replace('/dashboard');
-    router.refresh();
   }
 
   return (
@@ -57,16 +56,10 @@ export default function LoginPage() {
           <Box component="form" onSubmit={submit} sx={{ display: 'grid', gap: 2 }}>
             <TextField label="Email" type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} />
             <TextField label="Password" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} />
-            <button
-              type="button"
-              onClick={fillDemoCredentials}
-              disabled={demoLoading || submitting}
-              aria-label="Auto Fill Demo Credentials"
-              style={{ width: '100%', marginBottom: '12px', padding: '10px 14px', borderRadius: '8px', border: '1px solid currentColor', background: 'transparent', cursor: 'pointer' }}
-            >
-              {demoLoading ? 'Loading Demo Credentials…' : 'Auto Fill Demo Credentials'}
-            </button>
-            <Button type="submit" variant="contained" size="large" disabled={submitting}>{submitting ? 'Signing in…' : 'Sign In'}</Button>
+            <Button type="button" variant="outlined" onClick={fillDemoCredentials} disabled={demoLoading || submitting}>
+              {demoLoading ? 'Loading demo credentials…' : 'Fill demo credentials'}
+            </Button>
+            <Button type="submit" variant="contained" size="large" disabled={submitting || demoLoading}>{submitting ? 'Signing in…' : 'Sign In'}</Button>
           </Box>
         </CardContent>
       </Card>

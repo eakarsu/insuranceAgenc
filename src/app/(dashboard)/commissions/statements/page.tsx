@@ -30,7 +30,7 @@ export default function StatementsPage() {
     },
   });
 
-  const commissions = data?.commissions || [];
+  const commissions = Array.isArray(data?.commissions) ? data.commissions : [];
   const totalEarned = commissions.reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
   const totalPaid = commissions.filter((c: any) => c.status === 'PAID').reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
   const totalPending = commissions.filter((c: any) => c.status !== 'PAID').reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
@@ -347,6 +347,7 @@ export default function StatementsPage() {
       {/* Data Grid */}
       <Card sx={{ borderRadius: 2.5, overflow: 'hidden' }}>
         <DataGrid
+          initialState={{ pagination: { paginationModel: { page: 0, pageSize: 25 } } }}
           rows={filteredCommissions}
           columns={columns}
           loading={isLoading}

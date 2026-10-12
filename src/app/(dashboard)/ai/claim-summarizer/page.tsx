@@ -1,4 +1,6 @@
 'use client';
+import FullAIExamples, { useFullAIExamples } from "../../../../components/FullAIExamples";
+
 
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -14,6 +16,8 @@ import AIResponseFormatter from '@/components/ai/AIResponseFormatter';
 import { safeText } from '@/lib/ai-render-utils';
 
 export default function ClaimSummarizerPage() {
+  const fullAIExamples = useFullAIExamples();
+
   const [claimId, setClaimId] = useState('');
   const [includeDocuments, setIncludeDocuments] = useState(true);
   const [result, setResult] = useState<any>(null);
@@ -47,7 +51,7 @@ export default function ClaimSummarizerPage() {
   };
 
   return (
-    <Box className="animate-fade-in">
+    <Box className="animate-fade-in"><div data-full-ai-workspace="ClaimSummarizerPage"><FullAIExamples controller={fullAIExamples} />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <Summarize sx={{ fontSize: 32, color: 'warning.main' }} />
         <Box>
@@ -83,7 +87,7 @@ export default function ClaimSummarizerPage() {
               )}
 
               <FormControlLabel
-                control={<Switch checked={includeDocuments} onChange={(e) => setIncludeDocuments(e.target.checked)} />}
+                control={<Switch checked={includeDocuments} onChange={(e) => setIncludeDocuments(e.target.checked)} data-full-ai-field={fullAIExamples.bind({ current: includeDocuments, change: (e) => setIncludeDocuments(e.target.checked), label: "includeDocuments", manual: false, json: false, sample: true }, "p1-3578", undefined)} />}
                 label="Include document analysis"
                 sx={{ mb: 3, display: 'block' }}
               />
@@ -272,6 +276,6 @@ export default function ClaimSummarizerPage() {
           </Card>
         </Grid>
       </Grid>
-    </Box>
+    </div></Box>
   );
 }

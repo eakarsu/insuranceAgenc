@@ -1,4 +1,6 @@
 'use client';
+import FullAIExamples, { useFullAIExamples } from "../../../../components/FullAIExamples";
+
 
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -12,6 +14,8 @@ import AIResponseFormatter from '@/components/ai/AIResponseFormatter';
 import { safeText } from '@/lib/ai-render-utils';
 
 export default function LossRunAnalyzerPage() {
+  const fullAIExamples = useFullAIExamples();
+
   const [clientId, setClientId] = useState('');
   const [lossRunData, setLossRunData] = useState('');
   const [dateRange, setDateRange] = useState('');
@@ -59,7 +63,7 @@ export default function LossRunAnalyzerPage() {
   };
 
   return (
-    <Box className="animate-fade-in">
+    <Box className="animate-fade-in"><div data-full-ai-workspace="LossRunAnalyzerPage"><FullAIExamples controller={fullAIExamples} />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <Assessment sx={{ fontSize: 32, color: 'error.main' }} />
         <Box>
@@ -94,7 +98,7 @@ export default function LossRunAnalyzerPage() {
                 placeholder="e.g., 2023-2025 or Last 5 years"
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
-                sx={{ mb: 3 }}
+                sx={{ mb: 3 }} data-full-ai-field={fullAIExamples.bind({ current: dateRange, change: (e) => setDateRange(e.target.value), label: "dateRange", manual: false, json: false, sample: '' }, "p1-3635", undefined)}
               />
 
               <TextField
@@ -105,7 +109,7 @@ export default function LossRunAnalyzerPage() {
                 placeholder="Paste loss run data here, or leave blank to analyze client's claim history..."
                 value={lossRunData}
                 onChange={(e) => setLossRunData(e.target.value)}
-                sx={{ mb: 3 }}
+                sx={{ mb: 3 }} data-full-ai-field={fullAIExamples.bind({ current: lossRunData, change: (e) => setLossRunData(e.target.value), label: "lossRunData", manual: false, json: false, sample: '' }, "p1-3929", undefined)}
               />
 
               {/* Sample Test Data */}
@@ -328,6 +332,6 @@ export default function LossRunAnalyzerPage() {
           </Card>
         </Grid>
       </Grid>
-    </Box>
+    </div></Box>
   );
 }

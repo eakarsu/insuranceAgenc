@@ -94,7 +94,7 @@ export default function ClientsPage() {
   const [stateFilter, setStateFilter] = useState('');
   const [agentFilter, setAgentFilter] = useState('');
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(25);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -131,7 +131,7 @@ export default function ClientsPage() {
     },
   });
 
-  const clients: Client[] = data?.clients || [];
+  const clients: Client[] = Array.isArray(data?.clients) ? data.clients : [];
   const totalCount = data?.pagination?.total || 0;
 
   // Compute summary stats from current data
@@ -433,7 +433,7 @@ export default function ClientsPage() {
                 size="small"
                 startIcon={<Download />}
                 onClick={() => {
-                  const allClients = data?.clients || [];
+                  const allClients = Array.isArray(data?.clients) ? data.clients : [];
                   const csv = [
                     ['Name', 'Type', 'Status', 'Email', 'Phone', 'City', 'State', 'Agent', 'Created'].join(','),
                     ...allClients.map((c: Client) => [

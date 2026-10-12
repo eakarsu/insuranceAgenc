@@ -1,4 +1,6 @@
 'use client';
+import FullAIExamples, { useFullAIExamples } from "../../../../components/FullAIExamples";
+
 
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
@@ -24,6 +26,8 @@ const entityIcons: Record<string, React.ReactNode> = {
 };
 
 export default function SmartSearchPage() {
+  const fullAIExamples = useFullAIExamples();
+
   const [query, setQuery] = useState('');
   const [result, setResult] = useState<any>(null);
 
@@ -159,7 +163,7 @@ export default function SmartSearchPage() {
   };
 
   return (
-    <Box className="animate-fade-in">
+    <Box className="animate-fade-in"><div data-full-ai-workspace="SmartSearchPage"><FullAIExamples controller={fullAIExamples} />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <Search sx={{ fontSize: 32, color: 'info.main' }} />
         <Box>
@@ -182,7 +186,7 @@ export default function SmartSearchPage() {
                 placeholder="e.g., Find all clients in Texas with auto policies..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                sx={{ mb: 2 }}
+                sx={{ mb: 2 }} data-full-ai-field={fullAIExamples.bind({ current: query, change: (e) => setQuery(e.target.value), label: "query", manual: false, json: false, sample: '' }, "p1-6495", undefined)}
               />
 
               <Box sx={{ mb: 3 }}>
@@ -285,6 +289,6 @@ export default function SmartSearchPage() {
           </Card>
         </Grid>
       </Grid>
-    </Box>
+    </div></Box>
   );
 }

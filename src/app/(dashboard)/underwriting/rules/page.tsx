@@ -132,7 +132,7 @@ export default function UnderwritingRulesPage() {
     return lob.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
-  const rules = data?.rules || [];
+  const rules = Array.isArray(data?.rules) ? data.rules : [];
 
   const filteredRules = useMemo(() => {
     if (!search.trim()) return rules;
@@ -289,6 +289,7 @@ export default function UnderwritingRulesPage() {
       {/* Data Grid */}
       <Card sx={{ borderRadius: 2.5, overflow: 'hidden' }}>
         <DataGrid
+          initialState={{ pagination: { paginationModel: { page: 0, pageSize: 25 } } }}
           rows={filteredRules}
           columns={columns}
           loading={isLoading}

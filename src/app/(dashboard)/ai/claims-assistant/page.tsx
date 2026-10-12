@@ -1,4 +1,6 @@
 'use client';
+import FullAIExamples, { useFullAIExamples } from "../../../../components/FullAIExamples";
+
 
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
@@ -12,6 +14,8 @@ import AIResponseFormatter from '@/components/ai/AIResponseFormatter';
 import { safeText } from '@/lib/ai-render-utils';
 
 export default function ClaimsAssistantPage() {
+  const fullAIExamples = useFullAIExamples();
+
   const [claimType, setClaimType] = useState('');
   const [description, setDescription] = useState('');
   const [dateOfLoss, setDateOfLoss] = useState('');
@@ -35,7 +39,7 @@ export default function ClaimsAssistantPage() {
   });
 
   return (
-    <Box className="animate-fade-in">
+    <Box className="animate-fade-in"><div data-full-ai-workspace="ClaimsAssistantPage"><FullAIExamples controller={fullAIExamples} />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <SupportAgent sx={{ fontSize: 32, color: 'warning.main' }} />
         <Box>
@@ -52,7 +56,7 @@ export default function ClaimsAssistantPage() {
 
               <FormControl fullWidth sx={{ mb: 3 }}>
                 <InputLabel>Claim Type</InputLabel>
-                <Select value={claimType} label="Claim Type" onChange={(e) => setClaimType(e.target.value)}>
+                <Select value={claimType} label="Claim Type" onChange={(e) => setClaimType(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: claimType, change: (e) => setClaimType(e.target.value), label: "claimType", manual: false, json: false, sample: '' }, "p1-2386", undefined)}>
                   {claimTypes.map((type) => (
                     <MenuItem key={type} value={type}>{type}</MenuItem>
                   ))}
@@ -66,7 +70,7 @@ export default function ClaimsAssistantPage() {
                 value={dateOfLoss}
                 onChange={(e) => setDateOfLoss(e.target.value)}
                 InputLabelProps={{ shrink: true }}
-                sx={{ mb: 3 }}
+                sx={{ mb: 3 }} data-full-ai-field={fullAIExamples.bind({ current: dateOfLoss, change: (e) => setDateOfLoss(e.target.value), label: "dateOfLoss", manual: false, json: false, sample: '' }, "p1-2689", undefined)}
               />
 
               <TextField
@@ -77,7 +81,7 @@ export default function ClaimsAssistantPage() {
                 placeholder="Describe what happened, where, when, and any injuries or damages..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                sx={{ mb: 3 }}
+                sx={{ mb: 3 }} data-full-ai-field={fullAIExamples.bind({ current: description, change: (e) => setDescription(e.target.value), label: "description", manual: false, json: false, sample: '' }, "p1-3004", undefined)}
               />
 
               {/* Sample Test Data */}
@@ -410,6 +414,6 @@ export default function ClaimsAssistantPage() {
           </Card>
         </Grid>
       </Grid>
-    </Box>
+    </div></Box>
   );
 }

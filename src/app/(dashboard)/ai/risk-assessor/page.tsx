@@ -1,4 +1,6 @@
 'use client';
+import FullAIExamples, { useFullAIExamples } from "../../../../components/FullAIExamples";
+
 
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -16,6 +18,8 @@ import AIResponseFormatter from '@/components/ai/AIResponseFormatter';
 import { safeText } from '@/lib/ai-render-utils';
 
 export default function RiskAssessorPage() {
+  const fullAIExamples = useFullAIExamples();
+
   const [clientId, setClientId] = useState('');
   const [lineOfBusiness, setLineOfBusiness] = useState('');
   const [additionalInfo, setAdditionalInfo] = useState('');
@@ -72,7 +76,7 @@ export default function RiskAssessorPage() {
   ];
 
   return (
-    <Box className="animate-fade-in">
+    <Box className="animate-fade-in"><div data-full-ai-workspace="RiskAssessorPage"><FullAIExamples controller={fullAIExamples} />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <Assessment sx={{ fontSize: 32, color: 'info.main' }} />
         <Box>
@@ -109,7 +113,7 @@ export default function RiskAssessorPage() {
                 <Select
                   value={lineOfBusiness}
                   label="Line of Business"
-                  onChange={(e) => setLineOfBusiness(e.target.value)}
+                  onChange={(e) => setLineOfBusiness(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: lineOfBusiness, change: (e) => setLineOfBusiness(e.target.value), label: "lineOfBusiness", manual: false, json: false, sample: '' }, "p1-4100", undefined)}
                 >
                   {lobOptions.map((lob) => (
                     <MenuItem key={lob.value} value={lob.value}>{lob.label}</MenuItem>
@@ -125,7 +129,7 @@ export default function RiskAssessorPage() {
                 placeholder="Property details, vehicle info, claims history, etc..."
                 value={additionalInfo}
                 onChange={(e) => setAdditionalInfo(e.target.value)}
-                sx={{ mb: 3 }}
+                sx={{ mb: 3 }} data-full-ai-field={fullAIExamples.bind({ current: additionalInfo, change: (e) => setAdditionalInfo(e.target.value), label: "additionalInfo", manual: false, json: false, sample: '' }, "p1-4504", undefined)}
               />
 
               {/* Sample Test Data */}
@@ -428,6 +432,6 @@ export default function RiskAssessorPage() {
       <Alert severity="info" icon={<Assessment />} sx={{ mt: 3 }}>
         This AI assessment considers multiple data sources including credit reports, claims history, property data, and market conditions to provide a comprehensive risk score.
       </Alert>
-    </Box>
+    </div></Box>
   );
 }

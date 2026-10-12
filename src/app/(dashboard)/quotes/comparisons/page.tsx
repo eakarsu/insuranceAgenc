@@ -48,7 +48,7 @@ export default function QuoteComparisonsPage() {
     },
   });
 
-  const quotes: Quote[] = data?.quotes || [];
+  const quotes: Quote[] = Array.isArray(data?.quotes) ? data.quotes : [];
 
   // Get the client ID of the first selected quote (to lock selections to same client)
   const selectedClientId = useMemo(() => {

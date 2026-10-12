@@ -19,7 +19,7 @@ export default function UnderwritingPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(25);
   const [runDialogOpen, setRunDialogOpen] = useState(false);
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
@@ -59,7 +59,7 @@ export default function UnderwritingPage() {
     },
   });
 
-  const results = data?.results || [];
+  const results = Array.isArray(data?.results) ? data.results : [];
   const totalCount = data?.pagination?.total || 0;
 
   const filteredResults = useMemo(() => {

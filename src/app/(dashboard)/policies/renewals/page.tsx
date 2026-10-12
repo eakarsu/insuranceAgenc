@@ -62,7 +62,7 @@ export default function RenewalsPage() {
     },
   });
 
-  const policies = data?.policies || [];
+  const policies = Array.isArray(data?.policies) ? data.policies : [];
   const upcomingRenewalsAll = policies.filter((p: any) => {
     const daysUntilExpiration = differenceInDays(new Date(p.expirationDate), new Date());
     return daysUntilExpiration <= 90 && daysUntilExpiration > 0;

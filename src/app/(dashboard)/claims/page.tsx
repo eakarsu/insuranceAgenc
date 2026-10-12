@@ -25,7 +25,7 @@ export default function ClaimsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(25);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedClaim, setSelectedClaim] = useState<any>(null);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
@@ -51,7 +51,7 @@ export default function ClaimsPage() {
     },
   });
 
-  const claims = data?.claims || [];
+  const claims = Array.isArray(data?.claims) ? data.claims : [];
   const totalCount = data?.pagination?.total || 0;
 
   const stats = useMemo(() => {

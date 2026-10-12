@@ -26,7 +26,7 @@ export default function PoliciesPage() {
   const [lobFilter, setLobFilter] = useState('');
   const [agentFilter, setAgentFilter] = useState('');
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(25);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
@@ -58,7 +58,7 @@ export default function PoliciesPage() {
     },
   });
 
-  const policies = data?.policies || [];
+  const policies = Array.isArray(data?.policies) ? data.policies : [];
   const totalCount = data?.pagination?.total || 0;
 
   const stats = useMemo(() => {

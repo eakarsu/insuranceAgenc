@@ -1,4 +1,6 @@
 'use client';
+import FullAIExamples, { useFullAIExamples } from "../../../../components/FullAIExamples";
+
 
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -17,6 +19,8 @@ const emailTypes = [
 const toneOptions = ['Professional', 'Friendly', 'Urgent'];
 
 export default function EmailComposerPage() {
+  const fullAIExamples = useFullAIExamples();
+
   const [emailType, setEmailType] = useState('');
   const [clientId, setClientId] = useState('');
   const [additionalContext, setAdditionalContext] = useState('');
@@ -94,7 +98,7 @@ export default function EmailComposerPage() {
   };
 
   return (
-    <Box className="animate-fade-in">
+    <Box className="animate-fade-in"><div data-full-ai-workspace="EmailComposerPage"><FullAIExamples controller={fullAIExamples} />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <Email sx={{ fontSize: 32, color: 'primary.main' }} />
         <Box>
@@ -111,7 +115,7 @@ export default function EmailComposerPage() {
 
               <FormControl fullWidth sx={{ mb: 3 }}>
                 <InputLabel>Email Type</InputLabel>
-                <Select value={emailType} label="Email Type" onChange={(e) => setEmailType(e.target.value)}>
+                <Select value={emailType} label="Email Type" onChange={(e) => setEmailType(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: emailType, change: (e) => setEmailType(e.target.value), label: "emailType", manual: false, json: false, sample: '' }, "p1-4288", undefined)}>
                   {emailTypes.map((type) => (
                     <MenuItem key={type} value={type}>{type}</MenuItem>
                   ))}
@@ -134,7 +138,7 @@ export default function EmailComposerPage() {
 
               <FormControl fullWidth sx={{ mb: 3 }}>
                 <InputLabel>Tone</InputLabel>
-                <Select value={tone} label="Tone" onChange={(e) => setTone(e.target.value)}>
+                <Select value={tone} label="Tone" onChange={(e) => setTone(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: tone, change: (e) => setTone(e.target.value), label: "tone", manual: false, json: false, sample: 'Professional' }, "p1-5347", undefined)}>
                   {toneOptions.map((t) => (
                     <MenuItem key={t} value={t}>{t}</MenuItem>
                   ))}
@@ -149,7 +153,7 @@ export default function EmailComposerPage() {
                 placeholder="Any specific details to include in the email..."
                 value={additionalContext}
                 onChange={(e) => setAdditionalContext(e.target.value)}
-                sx={{ mb: 3 }}
+                sx={{ mb: 3 }} data-full-ai-field={fullAIExamples.bind({ current: additionalContext, change: (e) => setAdditionalContext(e.target.value), label: "additionalContext", manual: false, json: false, sample: '' }, "p1-5623", undefined)}
               />
 
               {/* Sample Test Data */}
@@ -302,6 +306,6 @@ export default function EmailComposerPage() {
       </Grid>
 
       <Snackbar open={copied} autoHideDuration={2000} onClose={() => setCopied(false)} message="Email copied to clipboard" />
-    </Box>
+    </div></Box>
   );
 }

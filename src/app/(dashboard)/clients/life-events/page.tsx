@@ -80,7 +80,7 @@ export default function LifeEventsPage() {
     },
   });
 
-  const events = data?.events || [];
+  const events = Array.isArray(data?.events) ? data.events : [];
 
   const stats = useMemo(() => {
     const total = events.length;

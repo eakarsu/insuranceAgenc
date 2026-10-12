@@ -22,7 +22,7 @@ export default function CancellationsPage() {
   const [search, setSearch] = useState('');
   const [lobFilter, setLobFilter] = useState('');
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(25);
   const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
@@ -41,7 +41,7 @@ export default function CancellationsPage() {
     },
   });
 
-  const policies = data?.policies || [];
+  const policies = Array.isArray(data?.policies) ? data.policies : [];
   const totalCount = data?.pagination?.total || policies.length;
 
   const stats = useMemo(() => {

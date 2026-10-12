@@ -65,7 +65,7 @@ export default function FollowUpsPage() {
     },
   });
 
-  const followUps = data?.followUps || [];
+  const followUps = Array.isArray(data?.followUps) ? data.followUps : [];
 
   const filteredFollowUps = useMemo(() => {
     if (!search.trim()) return followUps;

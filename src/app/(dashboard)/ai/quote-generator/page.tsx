@@ -1,4 +1,6 @@
 'use client';
+import FullAIExamples, { useFullAIExamples } from "../../../../components/FullAIExamples";
+
 
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -14,6 +16,8 @@ import AIResponseFormatter from '@/components/ai/AIResponseFormatter';
 import { safeText } from '@/lib/ai-render-utils';
 
 export default function AIQuoteGeneratorPage() {
+  const fullAIExamples = useFullAIExamples();
+
   const [clientId, setClientId] = useState('');
   const [lineOfBusiness, setLineOfBusiness] = useState('');
   const [additionalInfo, setAdditionalInfo] = useState('');
@@ -71,7 +75,7 @@ export default function AIQuoteGeneratorPage() {
   };
 
   return (
-    <Box className="animate-fade-in">
+    <Box className="animate-fade-in"><div data-full-ai-workspace="AIQuoteGeneratorPage"><FullAIExamples controller={fullAIExamples} />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <AutoAwesome sx={{ fontSize: 32, color: 'primary.main' }} />
         <Box>
@@ -102,7 +106,7 @@ export default function AIQuoteGeneratorPage() {
 
               <FormControl fullWidth sx={{ mb: 3 }}>
                 <InputLabel>Line of Business</InputLabel>
-                <Select value={lineOfBusiness} label="Line of Business" onChange={(e) => setLineOfBusiness(e.target.value)}>
+                <Select value={lineOfBusiness} label="Line of Business" onChange={(e) => setLineOfBusiness(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: lineOfBusiness, change: (e) => setLineOfBusiness(e.target.value), label: "lineOfBusiness", manual: false, json: false, sample: '' }, "p1-4379", undefined)}>
                   {lobOptions.map((lob) => (
                     <MenuItem key={lob} value={lob}>{lob.replace(/_/g, ' ')}</MenuItem>
                   ))}
@@ -117,7 +121,7 @@ export default function AIQuoteGeneratorPage() {
                 placeholder="Enter details about vehicles, property, coverage needs..."
                 value={additionalInfo}
                 onChange={(e) => setAdditionalInfo(e.target.value)}
-                sx={{ mb: 3 }}
+                sx={{ mb: 3 }} data-full-ai-field={fullAIExamples.bind({ current: additionalInfo, change: (e) => setAdditionalInfo(e.target.value), label: "additionalInfo", manual: false, json: false, sample: '' }, "p1-4713", undefined)}
               />
 
               {/* Sample Test Data */}
@@ -434,6 +438,6 @@ export default function AIQuoteGeneratorPage() {
           </Card>
         </Grid>
       </Grid>
-    </Box>
+    </div></Box>
   );
 }

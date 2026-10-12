@@ -91,7 +91,7 @@ export default function DocumentsPage() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const documents = data?.documents || [];
+  const documents = Array.isArray(data?.documents) ? data.documents : [];
 
   const stats = useMemo(() => {
     const total = documents.length;
@@ -290,6 +290,7 @@ export default function DocumentsPage() {
       {/* Data Grid */}
       <Card sx={{ borderRadius: 2.5, overflow: 'hidden' }}>
         <DataGrid
+          initialState={{ pagination: { paginationModel: { page: 0, pageSize: 25 } } }}
           rows={documents}
           columns={columns}
           loading={isLoading}

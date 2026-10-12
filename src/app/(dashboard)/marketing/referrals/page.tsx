@@ -118,7 +118,7 @@ export default function ReferralsPage() {
   ];
 
   const stats = data?.stats || { total: 0, converted: 0, pending: 0 };
-  const allReferrals = data?.referrals || [];
+  const allReferrals = Array.isArray(data?.referrals) ? data.referrals : [];
 
   const referrals = allReferrals.filter((r: any) => {
     if (!search) return true;
@@ -245,6 +245,7 @@ export default function ReferralsPage() {
       {/* Data Grid */}
       <Card sx={{ borderRadius: 2.5, overflow: 'hidden' }}>
         <DataGrid
+          initialState={{ pagination: { paginationModel: { page: 0, pageSize: 25 } } }}
           rows={referrals}
           columns={columns}
           loading={isLoading}
