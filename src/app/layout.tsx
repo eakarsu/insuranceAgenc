@@ -20,6 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className} id="__next">
+<script src="/feature-pack/feature-pack.js" defer />
         <SessionProvider>
           <QueryProvider>
             <ThemeProvider>{children}</ThemeProvider>
